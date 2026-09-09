@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { DEFAULT_PET_STATE, type PetState } from '../../domain/models';
-import { getPetState } from '../../services/storage';
+import { completeAdoption, getOnboardingState, getPetState } from '../../services/storage';
 import { browser } from 'wxt/browser';
+import type { AdoptionInput } from '../../domain/adoption';
+import AdoptionFlow from './AdoptionFlow';
 
 const moodCopy: Record<PetState['mood'], { emoji: string; title: string; line: string }> = {
   sleeping: { emoji: '🌙', title: '睡着啦', line: '今天的标签页森林很安静。' },
@@ -15,9 +17,13 @@ const moodCopy: Record<PetState['mood'], { emoji: string; title: string; line: s
 
 export default function App() {
   const [state, setState] = useState<PetState>(DEFAULT_PET_STATE);
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
   useEffect(() => {
-    void getPetState().then(setState);
+    void Promise.all([getPetState(), getOnboardingState()]).then(([pet, onboarding]) => {
+      setState(pet);
+      setOnboarded(onboarding.completedAt !== null);
+    });
     const listener = (message: { type?: string; payload?: PetState }) => {
       if (message.type === 'TABBIT_STATE_UPDATED' && message.payload) setState(message.payload);
     };
@@ -25,6 +31,16 @@ export default function App() {
     void browser.runtime.sendMessage({ type: 'TABBIT_REFRESH' });
     return () => browser.runtime.onMessage.removeListener(listener);
   }, []);
+
+  async function finishAdoption(input: AdoptionInput) {
+    const pet = await completeAdoption(input);
+    setState(pet);
+    setOnboarded(true);
+    await browser.runtime.sendMessage({ type: 'TABBIT_REFRESH' }).catch(() => undefined);
+  }
+
+  if (onboarded === null) return <main className="shell loading">正在准备小窝…</main>;
+  if (!onboarded) return <AdoptionFlow initialName={state.name} onComplete={finishAdoption} />;
 
   const copy = moodCopy[state.mood];
   return (

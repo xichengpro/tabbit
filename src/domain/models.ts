@@ -40,6 +40,11 @@ export interface UserSettings {
   quietHoursEnd: number;
 }
 
+export interface OnboardingState {
+  schemaVersion: 1;
+  completedAt: number | null;
+}
+
 export const DEFAULT_SETTINGS: UserSettings = {
   schemaVersion: 1,
   softTabLimit: 20,
@@ -60,4 +65,9 @@ export const DEFAULT_PET_STATE: PetState = {
   xp: 0,
   leaves: 0,
   lastUpdatedAt: Date.now()
+};
+
+export const DEFAULT_ONBOARDING_STATE: OnboardingState = {
+  schemaVersion: 1,
+  completedAt: null
 };
