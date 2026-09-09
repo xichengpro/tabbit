@@ -1,0 +1,63 @@
+export type PetMood =
+  | 'sleeping'
+  | 'calm'
+  | 'curious'
+  | 'busy'
+  | 'overwhelmed'
+  | 'focused'
+  | 'celebrating';
+
+export interface BrowserSnapshot {
+  capturedAt: number;
+  tabCount: number;
+  windowCount: number;
+  audibleCount: number;
+  staleCount: number;
+  openedLast10Minutes: number;
+}
+
+export interface PetState {
+  schemaVersion: 1;
+  name: string;
+  mood: PetMood;
+  loadScore: number;
+  level: number;
+  xp: number;
+  leaves: number;
+  lastUpdatedAt: number;
+  focusEndsAt?: number;
+  celebrationEndsAt?: number;
+}
+
+export interface UserSettings {
+  schemaVersion: 1;
+  softTabLimit: number;
+  hardTabLimit: number;
+  staleAfterHours: number;
+  reducedMotion: boolean;
+  notificationsEnabled: boolean;
+  quietHoursStart: number;
+  quietHoursEnd: number;
+}
+
+export const DEFAULT_SETTINGS: UserSettings = {
+  schemaVersion: 1,
+  softTabLimit: 20,
+  hardTabLimit: 50,
+  staleAfterHours: 24,
+  reducedMotion: false,
+  notificationsEnabled: false,
+  quietHoursStart: 23,
+  quietHoursEnd: 8
+};
+
+export const DEFAULT_PET_STATE: PetState = {
+  schemaVersion: 1,
+  name: '团团',
+  mood: 'curious',
+  loadScore: 0,
+  level: 1,
+  xp: 0,
+  leaves: 0,
+  lastUpdatedAt: Date.now()
+};

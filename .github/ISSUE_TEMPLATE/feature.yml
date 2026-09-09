@@ -1,0 +1,34 @@
+name: Feature
+description: Propose a scoped product change
+title: "[Feature] "
+labels: ["type:feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: What user problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected outcome
+      description: Describe observable behavior, not implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: "- [ ] Given... when... then..."
+    validations:
+      required: true
+  - type: checkboxes
+    id: guardrails
+    attributes:
+      label: Guardrails
+      options:
+        - label: This does not add broad permissions or page-content access.
+        - label: This does not perform destructive actions without confirmation.
+        - label: Reduced-motion and keyboard behavior are considered.

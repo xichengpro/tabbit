@@ -1,0 +1,75 @@
+import { useEffect, useState } from 'react';
+import { DEFAULT_PET_STATE, type PetState } from '../../domain/models';
+import { getPetState } from '../../services/storage';
+import { browser } from 'wxt/browser';
+
+const moodCopy: Record<PetState['mood'], { emoji: string; title: string; line: string }> = {
+  sleeping: { emoji: '🌙', title: '睡着啦', line: '今天的标签页森林很安静。' },
+  calm: { emoji: '🐰', title: '轻轻松松', line: '桌面很清爽，适合专心做一件事。' },
+  curious: { emoji: '🐇', title: '正在探险', line: '我闻到了几个新标签页的味道。' },
+  busy: { emoji: '🐰', title: '有点忙碌', line: '要不要先关掉几个已经看完的页面？' },
+  overwhelmed: { emoji: '🙈', title: '被标签页埋住了', line: '救救我——先整理五个就很棒。' },
+  focused: { emoji: '🎧', title: '专注中', line: '我替你守着门，先完成眼前这件事。' },
+  celebrating: { emoji: '🎉', title: '整理成功', line: '呼！又看见桌面啦。' }
+};
+
+export default function App() {
+  const [state, setState] = useState<PetState>(DEFAULT_PET_STATE);
+
+  useEffect(() => {
+    void getPetState().then(setState);
+    const listener = (message: { type?: string; payload?: PetState }) => {
+      if (message.type === 'TABBIT_STATE_UPDATED' && message.payload) setState(message.payload);
+    };
+    browser.runtime.onMessage.addListener(listener);
+    void browser.runtime.sendMessage({ type: 'TABBIT_REFRESH' });
+    return () => browser.runtime.onMessage.removeListener(listener);
+  }, []);
+
+  const copy = moodCopy[state.mood];
+  return (
+    <main className="shell">
+      <header className="topbar">
+        <div>
+          <span className="eyebrow">TABBIT · LEVEL {state.level}</span>
+          <h1>{state.name}</h1>
+        </div>
+        <button className="iconButton" title="设置" onClick={() => browser.runtime.openOptionsPage()}>
+          ⚙
+        </button>
+      </header>
+
+      <section className={`habitat mood-${state.mood}`} aria-live="polite">
+        <div className="pet" role="img" aria-label={`标签兔状态：${copy.title}`}>
+          {copy.emoji}
+        </div>
+        <div className="speech">
+          <strong>{copy.title}</strong>
+          <span>{copy.line}</span>
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="metricRow">
+          <span>浏览负载</span>
+          <strong>{state.loadScore}</strong>
+        </div>
+        <div className="meter" aria-label={`浏览负载 ${state.loadScore}%`}>
+          <span style={{ width: `${state.loadScore}%` }} />
+        </div>
+        <p className="hint">这是浏览节奏提示，不是效率评分。</p>
+      </section>
+
+      <section className="actions">
+        <button className="primary" disabled title="将在第 2 个开发任务中启用">
+          开始 25 分钟专注
+        </button>
+        <button className="secondary" disabled title="将在获得可选 tabs 权限后启用">
+          整理标签页
+        </button>
+      </section>
+
+      <footer>🍃 {state.leaves} · XP {state.xp}</footer>
+    </main>
+  );
+}
