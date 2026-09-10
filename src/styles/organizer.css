@@ -1,0 +1,31 @@
+.organizer { max-width: 860px; margin: 0 auto; }
+.organizerHeader, .organizerSectionHead, .recoveryCard { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.organizerHeader { margin-bottom: 16px; }
+.organizerHeader h1 { margin-bottom: 0; }
+.compact { width: auto; padding: 9px 12px; }
+.organizerIntro { display: grid; gap: 13px; }
+.organizerIntro h2, .card h2 { margin: 0; font-size: 18px; }
+.organizerIntro p, .organizerEmpty p { margin: 0; color: #536158; line-height: 1.55; }
+.organizerSummary { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; }
+.organizerSummary p { margin: 0; }
+.recoveryCard { margin-bottom: 14px; padding: 12px 14px; border-radius: 16px; color: #365142; background: #e6f2e1; font-size: 13px; font-weight: 650; }
+.domainList { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.domainList span, .reasonChips em { border-radius: 999px; font-style: normal; }
+.domainList span { padding: 6px 9px; color: #42604a; background: #edf5e9; font-size: 12px; }
+.selectionActions { display: flex; gap: 14px; margin: 8px 0 12px; }
+.candidateList { display: grid; gap: 8px; margin-bottom: 14px; }
+.candidateRow { display: flex; align-items: flex-start; gap: 11px; padding: 11px; border: 1px solid #d8e1d7; border-radius: 13px; background: #fffefa; cursor: pointer; }
+.candidateRow input { width: 18px; height: 18px; margin: 3px 0 0; flex: 0 0 auto; }
+.candidateContent { display: grid; min-width: 0; gap: 4px; }
+.candidateContent strong, .candidateContent small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.candidateContent strong { color: #304037; font-size: 14px; }
+.candidateContent small { color: #69776d; font-size: 12px; }
+.reasonChips { display: flex; flex-wrap: wrap; gap: 5px; }
+.reasonChips em { padding: 3px 6px; color: #805d2d; background: #fff0c8; font-size: 11px; }
+.confirmationBackdrop { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 20px; background: rgba(29, 43, 33, .38); }
+.confirmationCard { width: min(440px, 100%); display: grid; gap: 14px; padding: 22px; border-radius: 22px; background: #fffefa; box-shadow: 0 18px 50px rgba(26, 39, 30, .26); }
+.confirmationCard h2, .confirmationCard p { margin: 0; }
+.confirmationCard p { color: #536158; line-height: 1.55; }
+.dangerButton { background: #8b5047 !important; }
+.organizerNotice { margin: 14px 0 0; padding: 10px 12px; border-radius: 12px; color: #365142; background: #e6f2e1; line-height: 1.45; }
+@media (max-width: 520px) { .organizerHeader, .recoveryCard { align-items: flex-start; flex-direction: column; } .organizerHeader .compact, .recoveryCard .compact { width: 100%; } }

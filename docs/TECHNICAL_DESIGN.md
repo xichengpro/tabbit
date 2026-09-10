@@ -42,7 +42,7 @@ flowchart TD
 - `tabbit.content.tsx`：在普通网页创建 Shadow DOM 宠物图层，处理移动、情绪动作、点击和本地提醒；
 - `roaming.ts`：纯函数计算漫游目标、逃跑位置和心情动作；
 - `options`：设置、隐私和数据管理；
-- `organizer`（P1）：仅在获得可选权限后读取 URL/标题并生成候选。
+- `organizer`：仅在获得可选权限后读取 URL/标题并生成候选、预览、确认与恢复。
 
 ## 3. Service Worker 约束
 
@@ -70,11 +70,11 @@ flowchart TD
 
 网页宠物通过静态内容脚本匹配 `http://*/*` 与 `https://*/*`。脚本挂载扩展自有的 Shadow DOM；为了选择不挡字的路线，只对少量候选路径坐标执行 caret/range 命中测试并读取字符渲染矩形，不读取字符值、`document.title`、`location.href`、表单、选择内容或输入事件，也不向远程服务发送数据。设置关闭后组件不渲染；浏览器内部页、扩展页及商店保护页不会运行该脚本。最终 Manifest 的 API 权限、host permissions 和内容脚本匹配范围都由 CI 白名单审计。
 
-### P1 可选权限
+### 整理助手可选权限
 
 `tabs` 仅在用户主动进入“安全整理助手”时请求。基础宠物功能不能依赖此权限。拒绝或撤销权限后：
 
-- 清理内存中的 URL/标题派生结果；
+- 清理页面内存中的 URL/标题派生结果；
 - 不继续运行候选分析；
 - 保留聚合宠物状态；
 - UI 显示重新授权入口，不反复弹窗。
@@ -258,7 +258,7 @@ tabbit/
 │   │   ├── background.ts
 │   │   ├── sidepanel/
 │   │   ├── options/
-│   │   └── organizer/          # P1
+│   │   └── organizer/          # 可选权限整理页
 │   ├── services/               # Chrome API、storage、通知适配
 │   ├── components/             # 共享 UI（下一步抽取）
 │   ├── i18n/                   # 类型化 zh-CN 文案目录与状态文案选择
@@ -293,7 +293,7 @@ tabbit/
 - CSP 保持 Manifest V3 默认严格策略；
 - 所有用户名称用 React 文本节点渲染，不使用未净化 HTML；
 - 导出数据前显示字段预览；
-- P1 URL 标准化时不记录 query 参数到日志；
+- 整理使用 URL 标准化比较时不记录 query 参数到日志；恢复快照只保留用户确认关闭的 URL、窗口和索引，最长 24 小时；
 - 生产构建关闭详细调试日志；
 - 依赖更新执行 audit、许可证检查和人工 review；
 - 商店隐私说明与真实行为保持一致。

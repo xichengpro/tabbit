@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type {
   LoadReason,
   OnboardingState,
+  OrganizerRecoverySnapshot,
   PetMood,
   PetState,
   RewardLedger,
@@ -83,8 +84,23 @@ export const UnlockStateV1Schema = z.object({
   unlockedDecorationIds: z.array(z.string().min(1).max(100)).max(200)
 });
 
-export type StorageRecord = PetState | UserSettings | OnboardingState | RewardLedger | UnlockState;
-export type StorageKind = 'pet' | 'settings' | 'onboarding' | 'rewardLedger' | 'unlock';
+export const OrganizerRecoverySnapshotV1Schema = z.object({
+  schemaVersion: z.literal(STORAGE_SCHEMA_VERSION),
+  closedAt: z.number().int().nonnegative(),
+  expiresAt: z.number().int().nonnegative(),
+  tabs: z.array(z.object({
+    id: z.number().int().nonnegative(),
+    url: z.string().url().max(8_192),
+    windowId: z.number().int().nonnegative(),
+    index: z.number().int().nonnegative()
+  })).min(1).max(200)
+}).refine((snapshot) => snapshot.expiresAt > snapshot.closedAt, {
+  message: 'recovery snapshot must expire after it was created',
+  path: ['expiresAt']
+});
+
+export type StorageRecord = PetState | UserSettings | OnboardingState | RewardLedger | UnlockState | OrganizerRecoverySnapshot;
+export type StorageKind = 'pet' | 'settings' | 'onboarding' | 'rewardLedger' | 'unlock' | 'organizerRecovery';
 
 export type StorageDiagnosticCode = 'MISSING' | 'INVALID' | 'FUTURE_VERSION' | 'MIGRATION_REQUIRED';
 
@@ -206,6 +222,15 @@ export function migrateRewardLedger(raw: unknown): MigrationResult<RewardLedger>
 
 export function migrateUnlockState(raw: unknown): MigrationResult<UnlockState> {
   return migrateLegacy('unlock', raw, UnlockStateV1Schema as z.ZodType<UnlockState>, UNLOCK_DEFAULTS);
+}
+
+export function migrateOrganizerRecovery(raw: unknown): MigrationResult<OrganizerRecoverySnapshot> {
+  return migrateLegacy(
+    'organizerRecovery',
+    raw,
+    OrganizerRecoverySnapshotV1Schema as z.ZodType<OrganizerRecoverySnapshot>,
+    {}
+  );
 }
 
 export function sanitizeDiagnostics(items: StorageDiagnostic[], generatedAt = Date.now()): SanitizedDiagnostics {

@@ -119,7 +119,7 @@ export default function App() {
         <button className="primary" disabled title={t('app.focusDisabled')}>
           {t('app.focusButton')}
         </button>
-        <button className="secondary" disabled title={t('app.organizeDisabled')}>
+        <button className="secondary" title={t('app.organizeReady')} onClick={() => void browser.tabs.create({ url: browser.runtime.getURL('/organizer.html') })}>
           {t('app.organizeButton')}
         </button>
       </section>

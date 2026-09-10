@@ -24,7 +24,7 @@ Tabbit does not judge your productivity or pressure you to close everything. It 
 
 ## Privacy by default
 
-The Tabbit MVP does not read:
+Tabbit's core pet experience does not read:
 
 - Page content or form data
 - Tab titles or URLs
@@ -35,7 +35,7 @@ Pet state and preferences stay in the current browser. There is no registration,
 
 To display the rabbit on a page, Tabbit's content script creates an isolated Shadow DOM layer on regular `http://` and `https://` pages. To avoid covering text, it only checks rendered character rectangles at candidate landing spots; it does not read, store, or upload the characters themselves. It also does not read titles, URLs, forms, or input, and cannot run on browser-internal pages such as `chrome://`. You can disable the roaming pet from its right-click menu or the options page.
 
-The extension currently requests only three permissions:
+The extension requests only three permissions by default:
 
 | Permission | Why it is needed |
 | --- | --- |
@@ -43,7 +43,9 @@ The extension currently requests only three permissions:
 | `storage` | Save the pet name, preferences, and state locally |
 | `alarms` | Perform a low-frequency state correction once per minute |
 
-Those are the three Manifest API permissions. The roaming content script is separately restricted to `http://*/*` and `https://*/*`, with no additional `host_permissions`. Every build audits both API permissions and content-script scope; an unreviewed change fails CI.
+Only after you choose to organize tabs and approve the prompt does Tabbit request the optional `tabs` permission. It uses titles, URLs, activity time, and pinned/audible state locally to produce manually selectable candidates; nothing is uploaded. After closing selected tabs, only their URLs, original window, and order are held locally for up to 24 hours so you can restore them; the snapshot then expires automatically.
+
+Those are the three default Manifest API permissions; `tabs` is requested only as an optional permission. The roaming content script is separately restricted to `http://*/*` and `https://*/*`, with no additional `host_permissions`. Every build audits default permissions, optional permissions, and content-script scope; an unreviewed change fails CI.
 
 ## Try it from source
 
@@ -88,6 +90,7 @@ Available now:
 - Wave, hop, nap, and alert mood actions
 - Long-idle tab reminders with a 30-minute cooldown
 - Live browser-load score with contributing reasons
+- Safe tab organizer: manual candidate selection, preview plus second confirmation, and a 24-hour restore window
 - Four-state SVG animation with reduced-motion support
 - Local preferences, versioned storage, migrations, and corrupt/future-data protection
 - Typed Simplified Chinese mood copy, late-night variants, and six-hour repetition avoidance
@@ -96,13 +99,12 @@ Available now:
 Planned:
 
 - A 25-minute focus timer and completion celebrations
-- An optional tab-organizing assistant; closing, moving, or grouping tabs will always require preview and confirmation
 - A richer decoration and progression system
 - User-uploaded pet photos or animations, stored locally with validation and a restore-default option
 - Chrome Web Store release, store artwork, and a privacy-policy page
 - Edge and Firefox support
 
-The **Start focus** and **Organize tabs** buttons currently shown in the interface are previews and are not enabled yet.
+**Start focus** remains a preview. **Organize tabs** is available: grant the optional permission, review the unselected candidates, then select, preview, and confirm before anything closes.
 
 ## FAQ
 
@@ -112,7 +114,7 @@ It is a companion, not a productivity score. You can choose limits that match yo
 
 **Will it close tabs automatically?**
 
-No. The current version never closes, moves, or groups tabs. Any future organizing feature will require explicit confirmation.
+Never automatically. The organizer only shows candidates and selects none by default; you must manually select, preview, and confirm again. Active, pinned, audible, and recently used (last 10 minutes) tabs are not candidates. Selected tabs can be restored for 24 hours after closing.
 
 **How do I hide the rabbit on web pages?**
 

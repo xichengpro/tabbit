@@ -3,6 +3,7 @@ import {
   migratePetState,
   migrateRewardLedger,
   migrateSettings,
+  migrateOrganizerRecovery,
   getStorageSchemaVersion,
   sanitizeDiagnostics
 } from '../src/domain/storage-schema';
@@ -64,6 +65,16 @@ describe('storage schemas and migrations', () => {
       roamingOpacity: 65
     };
     expect(migrateSettings(value)).toEqual({ status: 'current', value });
+  });
+
+  it('keeps a valid 24-hour organizer recovery snapshot local and typed', () => {
+    const value = {
+      schemaVersion: 1 as const,
+      closedAt: 1_000,
+      expiresAt: 2_000,
+      tabs: [{ id: 4, url: 'https://example.com/a', windowId: 1, index: 2 }]
+    };
+    expect(migrateOrganizerRecovery(value)).toEqual({ status: 'current', value });
   });
 
   it('rejects an opacity outside the visible and usable range', () => {

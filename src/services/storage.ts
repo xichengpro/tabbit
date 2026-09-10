@@ -5,6 +5,7 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_UNLOCK_STATE,
   type OnboardingState,
+  type OrganizerRecoverySnapshot,
   type PetState,
   type RewardLedger,
   type UnlockState,
@@ -14,11 +15,13 @@ import { sanitizePetName, validateAdoption, type AdoptionInput } from '../domain
 import {
   getStorageSchemaVersion,
   migrateOnboardingState,
+  migrateOrganizerRecovery,
   migratePetState,
   migrateRewardLedger,
   migrateSettings,
   migrateUnlockState,
   OnboardingStateV1Schema,
+  OrganizerRecoverySnapshotV1Schema,
   PetStateV1Schema,
   RewardLedgerV1Schema,
   sanitizeDiagnostics,
@@ -38,6 +41,7 @@ const KEYS = {
   onboarding: 'onboardingV1',
   rewardLedger: 'rewardLedgerV1',
   unlock: 'unlockStateV1',
+  organizerRecovery: 'organizerRecoveryV1',
   recentOpens: 'recentTabOpensV1'
 } as const;
 
@@ -143,6 +147,28 @@ export async function setUnlockState(state: UnlockState): Promise<boolean> {
   return writeCurrent('unlock', UnlockStateV1Schema.parse(state));
 }
 
+export async function getOrganizerRecoverySnapshot(now = Date.now()): Promise<OrganizerRecoverySnapshot | undefined> {
+  const result = await browser.storage.local.get(KEYS.organizerRecovery);
+  const migration = migrateOrganizerRecovery(result[KEYS.organizerRecovery]);
+  rememberDiagnostic('organizerRecovery', migration as MigrationResult<unknown>);
+  if (migration.status !== 'current' && migration.status !== 'migrated') return undefined;
+  const snapshot = migration.value;
+  if (snapshot.expiresAt > now) return snapshot;
+  if (await canWrite(['organizerRecovery'])) await browser.storage.local.remove(KEYS.organizerRecovery);
+  return undefined;
+}
+
+export async function setOrganizerRecoverySnapshot(snapshot: OrganizerRecoverySnapshot): Promise<boolean> {
+  return writeCurrent('organizerRecovery', OrganizerRecoverySnapshotV1Schema.parse(snapshot));
+}
+
+export async function clearOrganizerRecoverySnapshot(): Promise<boolean> {
+  if (!(await canWrite(['organizerRecovery']))) return false;
+  await browser.storage.local.remove(KEYS.organizerRecovery);
+  diagnostics.delete('organizerRecovery');
+  return true;
+}
+
 export async function exportStorageDiagnostics(): Promise<SanitizedDiagnostics> {
   const all = await browser.storage.local.get();
   const migrations = [
@@ -150,9 +176,10 @@ export async function exportStorageDiagnostics(): Promise<SanitizedDiagnostics> 
     migrateSettings(all[KEYS.settings]),
     migrateOnboardingState(all[KEYS.onboarding]),
     migrateRewardLedger(all[KEYS.rewardLedger]),
-    migrateUnlockState(all[KEYS.unlock])
+    migrateUnlockState(all[KEYS.unlock]),
+    migrateOrganizerRecovery(all[KEYS.organizerRecovery])
   ];
-  const keys: StorageKind[] = ['pet', 'settings', 'onboarding', 'rewardLedger', 'unlock'];
+  const keys: StorageKind[] = ['pet', 'settings', 'onboarding', 'rewardLedger', 'unlock', 'organizerRecovery'];
   migrations.forEach((migration, index) => rememberDiagnostic(keys[index]!, migration as MigrationResult<unknown>));
   return sanitizeDiagnostics([...diagnostics.values()]);
 }

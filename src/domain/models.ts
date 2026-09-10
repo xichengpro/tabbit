@@ -83,6 +83,20 @@ export interface UnlockState {
   unlockedDecorationIds: string[];
 }
 
+export interface OrganizerRecoveryTab {
+  id: number;
+  url: string;
+  windowId: number;
+  index: number;
+}
+
+export interface OrganizerRecoverySnapshot {
+  schemaVersion: 1;
+  closedAt: number;
+  expiresAt: number;
+  tabs: OrganizerRecoveryTab[];
+}
+
 export const DEFAULT_REWARD_LEDGER: RewardLedger = {
   schemaVersion: 1,
   localDate: '1970-01-01',
