@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DEFAULT_PET_STATE, type PetState } from '../../domain/models';
+import { DEFAULT_PET_STATE, type LoadReasonCode, type PetState } from '../../domain/models';
 import { completeAdoption, getOnboardingState, getPetState } from '../../services/storage';
 import { browser } from 'wxt/browser';
 import type { AdoptionInput } from '../../domain/adoption';
@@ -13,6 +13,13 @@ const moodCopy: Record<PetState['mood'], { emoji: string; title: string; line: s
   overwhelmed: { emoji: '🙈', title: '被标签页埋住了', line: '救救我——先整理五个就很棒。' },
   focused: { emoji: '🎧', title: '专注中', line: '我替你守着门，先完成眼前这件事。' },
   celebrating: { emoji: '🎉', title: '整理成功', line: '呼！又看见桌面啦。' }
+};
+
+const reasonCopy: Record<LoadReasonCode, string> = {
+  TAB_COUNT: '标签页数量是当前的主要负载',
+  OPEN_BURST: '刚才连续打开了不少新标签页',
+  STALE_RATIO: '有一部分标签页很久没有访问',
+  AUDIO: '同时有多个标签页正在发声'
 };
 
 export default function App() {
@@ -74,6 +81,18 @@ export default function App() {
           <span style={{ width: `${state.loadScore}%` }} />
         </div>
         <p className="hint">这是浏览节奏提示，不是效率评分。</p>
+        <div className="reasonList" aria-label="浏览负载原因">
+          {state.loadReasons.length > 0 ? (
+            state.loadReasons.map((reason) => (
+              <div className="reasonItem" key={reason.code}>
+                <span>{reasonCopy[reason.code]}</span>
+                <strong>+{reason.contribution}</strong>
+              </div>
+            ))
+          ) : (
+            <p className="hint">目前没有明显的负载因素。</p>
+          )}
+        </div>
       </section>
 
       <section className="actions">

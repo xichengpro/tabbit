@@ -1,4 +1,4 @@
-import { calculateLoadScore, selectMood } from '../domain/load-engine';
+import { calculateLoad, selectMood } from '../domain/load-engine';
 import { captureBrowserSnapshot } from '../services/browser-snapshot';
 import { getPetState, getSettings, recordTabOpen, setPetState } from '../services/storage';
 import { browser } from 'wxt/browser';
@@ -8,11 +8,12 @@ const REFRESH_ALARM = 'refresh-tabbit-state';
 async function refreshState(): Promise<void> {
   const [settings, current] = await Promise.all([getSettings(), getPetState()]);
   const snapshot = await captureBrowserSnapshot(settings.staleAfterHours);
-  const loadScore = calculateLoadScore(snapshot, settings);
+  const load = calculateLoad(snapshot, settings);
   const next = {
     ...current,
-    loadScore,
-    mood: selectMood(loadScore, current),
+    loadScore: load.score,
+    loadReasons: load.reasons,
+    mood: selectMood(load.score, current),
     lastUpdatedAt: Date.now()
   };
   await setPetState(next);

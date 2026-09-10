@@ -16,11 +16,26 @@ export interface BrowserSnapshot {
   openedLast10Minutes: number;
 }
 
+export type LoadReasonCode = 'TAB_COUNT' | 'OPEN_BURST' | 'STALE_RATIO' | 'AUDIO';
+
+export interface LoadReason {
+  code: LoadReasonCode;
+  contribution: number;
+  messageKey: string;
+}
+
+export interface LoadResult {
+  score: number;
+  reasons: LoadReason[];
+  ruleVersion: 'load-v1';
+}
+
 export interface PetState {
   schemaVersion: 1;
   name: string;
   mood: PetMood;
   loadScore: number;
+  loadReasons: LoadReason[];
   level: number;
   xp: number;
   leaves: number;
@@ -61,6 +76,7 @@ export const DEFAULT_PET_STATE: PetState = {
   name: '团团',
   mood: 'curious',
   loadScore: 0,
+  loadReasons: [],
   level: 1,
   xp: 0,
   leaves: 0,

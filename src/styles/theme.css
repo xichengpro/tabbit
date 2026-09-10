@@ -26,6 +26,9 @@ h1 { margin: 4px 0 16px; font-size: 26px; }
 .meter { height: 8px; border-radius: 999px; margin-top: 10px; overflow: hidden; background: #dfe6de; }
 .meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #7bbf7a, #eca85d, #d67575); transition: width .4s ease; }
 .hint { margin: 9px 0 0; }
+.reasonList { display: grid; gap: 7px; margin-top: 13px; }
+.reasonItem { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #536158; font-size: 12px; line-height: 1.35; }
+.reasonItem strong { flex: 0 0 auto; color: #9b6535; font-size: 12px; }
 .actions { display: grid; gap: 9px; margin-top: 14px; }
 button.primary, button.secondary { border: 0; border-radius: 14px; padding: 12px 14px; font-weight: 720; cursor: pointer; }
 button.primary { background: #294f3d; color: white; }
