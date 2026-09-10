@@ -1,0 +1,200 @@
+.tabbitRoamingLayer {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: visible;
+  pointer-events: none;
+  color: #27322c;
+  font-family: Inter, ui-rounded, "SF Pro Rounded", system-ui, sans-serif;
+}
+
+.tabbitRoamer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 112px;
+  height: 112px;
+  pointer-events: auto;
+  transition: transform 2.1s cubic-bezier(.22, .75, .28, 1);
+  will-change: transform;
+}
+
+.tabbitRoamer.action-flee { transition-duration: .58s; }
+.tabbitRoamer.reducedMotion { transition: none; }
+
+.tabbitPetButton {
+  position: relative;
+  display: block;
+  width: 112px;
+  height: 112px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  outline: none;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  filter: drop-shadow(0 8px 8px rgba(43, 58, 47, .2));
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tabbitPetButton:focus-visible {
+  box-shadow: 0 0 0 4px #ffffff, 0 0 0 7px #3f7c4a;
+}
+
+.rabbitVisual {
+  width: 112px;
+  height: 112px;
+  transition: transform .2s ease;
+  transform-origin: center bottom;
+}
+
+.facingLeft .rabbitVisual { transform: scaleX(-1); }
+.action-selected .tabbitPetButton { box-shadow: 0 0 0 4px #fff, 0 0 0 8px #72a777; }
+.action-hop .rabbitVisual { animation: roaming-hop .72s ease-in-out 2; }
+.action-wave .rabbitVisual { animation: roaming-wave 1.2s ease-in-out; }
+.action-nap .rabbitVisual { animation: roaming-nap 2.4s ease-in-out; }
+.action-alert .rabbitVisual { animation: roaming-alert .22s ease-in-out 6; }
+.action-flee .rabbitVisual { animation: roaming-flee .29s ease-in-out 2; }
+
+.action-nap .spriteEye { transform: scaleY(.2); transform-origin: center; }
+.action-alert .spriteEar { transform: rotate(-6deg); }
+
+.roamingZzz,
+.roamingDust {
+  position: absolute;
+  pointer-events: none;
+  font-weight: 800;
+}
+
+.roamingZzz {
+  top: 1px;
+  right: -2px;
+  color: #6577a3;
+  font-size: 18px;
+  animation: roaming-zzz 1.7s ease-out infinite;
+}
+
+.roamingDust {
+  left: 2px;
+  bottom: 13px;
+  color: #b99a6b;
+  font-size: 18px;
+  letter-spacing: -6px;
+  opacity: .72;
+}
+
+.roamingSpeech {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 7px);
+  min-width: 150px;
+  max-width: 230px;
+  padding: 9px 12px;
+  border: 1px solid rgba(55, 78, 62, .14);
+  border-radius: 14px 14px 14px 5px;
+  color: #344439;
+  background: rgba(255, 254, 247, .97);
+  box-shadow: 0 8px 24px rgba(43, 58, 47, .16);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-align: center;
+  animation: roaming-bubble-in .2s ease-out;
+}
+
+.menuLeft .roamingSpeech {
+  right: 0;
+  left: auto;
+}
+
+.tabbitPetMenu {
+  position: absolute;
+  top: 2px;
+  left: calc(100% + 10px);
+  display: grid;
+  width: 218px;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid rgba(55, 78, 62, .16);
+  border-radius: 16px;
+  color: #2d3d33;
+  background: rgba(255, 254, 247, .98);
+  box-shadow: 0 14px 36px rgba(34, 48, 38, .22);
+}
+
+.menuLeft .tabbitPetMenu {
+  right: calc(100% + 10px);
+  left: auto;
+}
+
+.menuTop .tabbitPetMenu {
+  top: auto;
+  bottom: 0;
+}
+
+.tabbitPetMenuHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.tabbitPetMenu strong { font-size: 14px; }
+.tabbitPetMenu p { margin: 0 0 3px; color: #6a776e; font-size: 11px; line-height: 1.4; }
+.tabbitPetMenu button {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  color: #31513d;
+  background: #edf5e9;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tabbitPetMenu button:hover { background: #dfeeda; }
+.tabbitPetMenu .menuClose { width: 28px; padding: 5px; text-align: center; background: transparent; }
+.tabbitPetMenu .menuDanger { color: #7a3f3f; background: #fff0ed; }
+
+@keyframes roaming-hop {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  45% { transform: translateY(-18px) rotate(3deg); }
+}
+
+@keyframes roaming-wave {
+  0%, 100% { transform: rotate(0); }
+  30% { transform: rotate(-7deg); }
+  65% { transform: rotate(6deg); }
+}
+
+@keyframes roaming-nap {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(3px) scale(.97); }
+}
+
+@keyframes roaming-alert {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+}
+
+@keyframes roaming-flee {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-13px) rotate(-5deg); }
+}
+
+@keyframes roaming-zzz {
+  from { opacity: 0; transform: translate(0, 5px) scale(.8); }
+  35% { opacity: 1; }
+  to { opacity: 0; transform: translate(8px, -12px) scale(1.12); }
+}
+
+@keyframes roaming-bubble-in {
+  from { opacity: 0; transform: translateY(5px) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabbitRoamer,
+  .rabbitVisual,
+  .roamingZzz,
+  .roamingSpeech { animation: none !important; transition: none !important; }
+}

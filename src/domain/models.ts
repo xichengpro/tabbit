@@ -36,6 +36,7 @@ export interface PetState {
   mood: PetMood;
   loadScore: number;
   loadReasons: LoadReason[];
+  staleTabCount?: number;
   moodCandidate?: PetMood | undefined;
   moodCandidateSamples?: number | undefined;
   moodCandidateSince?: number | undefined;
@@ -57,6 +58,8 @@ export interface UserSettings {
   notificationsEnabled: boolean;
   quietHoursStart: number;
   quietHoursEnd: number;
+  roamingEnabled?: boolean;
+  staleRemindersEnabled?: boolean;
 }
 
 export interface OnboardingState {
@@ -101,7 +104,9 @@ export const DEFAULT_SETTINGS: UserSettings = {
   reducedMotion: false,
   notificationsEnabled: false,
   quietHoursStart: 23,
-  quietHoursEnd: 8
+  quietHoursEnd: 8,
+  roamingEnabled: true,
+  staleRemindersEnabled: true
 };
 
 export const DEFAULT_PET_STATE: PetState = {
@@ -110,6 +115,7 @@ export const DEFAULT_PET_STATE: PetState = {
   mood: 'curious',
   loadScore: 0,
   loadReasons: [],
+  staleTabCount: 0,
   level: 1,
   xp: 0,
   leaves: 0,

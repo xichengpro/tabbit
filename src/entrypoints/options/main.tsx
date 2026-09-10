@@ -59,6 +59,12 @@ function Options() {
       <label>{t('options.softLimit')}<input type="number" min="5" max="300" value={settings.softTabLimit} onChange={(e) => { update({ ...settings, softTabLimit: Number(e.target.value) }); setError(null); setSaved(false); }} /></label>
       <label>{t('options.hardLimit')}<input type="number" min="10" max="300" value={settings.hardTabLimit} onChange={(e) => { update({ ...settings, hardTabLimit: Number(e.target.value) }); setError(null); setSaved(false); }} /></label>
       <label className="check"><input type="checkbox" checked={settings.reducedMotion} onChange={(e) => { update({ ...settings, reducedMotion: e.target.checked }); setError(null); setSaved(false); }} />{t('options.reducedMotion')}</label>
+      <section className="settingsSection">
+        <h2>{t('options.roamingTitle')}</h2>
+        <p className="hint">{t('options.roamingHint')}</p>
+        <label className="check"><input type="checkbox" checked={settings.roamingEnabled ?? true} onChange={(e) => { update({ ...settings, roamingEnabled: e.target.checked }); setError(null); setSaved(false); }} />{t('options.roamingEnabled')}</label>
+        <label className="check"><input type="checkbox" disabled={!(settings.roamingEnabled ?? true)} checked={settings.staleRemindersEnabled ?? true} onChange={(e) => { update({ ...settings, staleRemindersEnabled: e.target.checked }); setError(null); setSaved(false); }} />{t('options.staleRemindersEnabled')}</label>
+      </section>
       {error && <p className="formError" role="alert">{error}</p>}
       <button className="primary" disabled={saving} onClick={() => void save()}>{saved ? t('options.saved') : saving ? t('options.saving') : t('options.save')}</button>
       <section className="settingsSection">

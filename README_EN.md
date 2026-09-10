@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/xichengpro/tabbit/actions/workflows/ci.yml/badge.svg)](https://github.com/xichengpro/tabbit/actions/workflows/ci.yml)
 
-A tiny rabbit that lives in your browser side panel and reacts to the rhythm of your tabs.
+A tiny rabbit that roams across web pages and reacts to the rhythm of your tabs.
 
 Tabbit does not judge your productivity or pressure you to close everything. It turns aggregate signals—tab count, recent opening bursts, long-idle tabs, and audible tabs—into a pet mood, making a busy browsing space easier to notice and understand.
 
@@ -13,6 +13,9 @@ Tabbit does not judge your productivity or pressure you to close everything. It 
 ## What you get
 
 - **A responsive tab rabbit**: calm, curious, busy, and overwhelmed states, each with its own color and animation.
+- **Page roaming**: Tabbit wanders around regular web pages; left-click to make it flee, or right-click to select it and open its controls.
+- **Expressive actions**: waving, hopping, napping, alert ear shakes, and mood-aware speech.
+- **Idle-tab reminders**: a gentle in-page bubble appears when tabs have been untouched for a long time, with a separate off switch.
 - **Plain-language explanations**: see not only a load score, but also whether tab count, opening bursts, idle tabs, or audible tabs contributed most.
 - **A one-minute adoption flow**: name your rabbit and choose a light, daily, or heavy browsing rhythm.
 - **Gentle feedback**: more tabs do not mean lower productivity. Tabbit describes the situation without blame, punishment, illness, or death mechanics.
@@ -29,6 +32,8 @@ The Tabbit MVP does not read:
 
 Pet state and preferences stay in the current browser. There is no registration, application backend, or browsing-data upload.
 
+To display the rabbit on a page, Tabbit's content script creates an isolated Shadow DOM layer on regular `http://` and `https://` pages. It does not read or analyze page DOM, content, titles, URLs, forms, or input. It cannot run on browser-internal pages such as `chrome://`. You can disable the roaming pet from its right-click menu or the options page.
+
 The extension currently requests only three permissions:
 
 | Permission | Why it is needed |
@@ -37,7 +42,7 @@ The extension currently requests only three permissions:
 | `storage` | Save the pet name, preferences, and state locally |
 | `alarms` | Perform a low-frequency state correction once per minute |
 
-Every build audits the final Manifest. An unapproved permission change fails CI and requires explicit review.
+Those are the three Manifest API permissions. The roaming content script is separately restricted to `http://*/*` and `https://*/*`, with no additional `host_permissions`. Every build audits both API permissions and content-script scope; an unreviewed change fails CI.
 
 ## Try it from source
 
@@ -58,7 +63,7 @@ Then:
 4. Choose the `.output/chrome-mv3` directory in the project.
 5. Click the Tabbit toolbar icon to open the side panel.
 
-On first launch, Tabbit guides you through a three-step adoption flow. Later, use the options page to change your comfortable and crowded tab limits, adjust motion preferences, or replay onboarding.
+On first launch, Tabbit guides you through a three-step adoption flow. After adoption, refresh a regular web page to meet the roaming rabbit. Left-click to make it flee; right-click to toggle idle-tab reminders, open full settings, or hide it. The options page can turn it back on.
 
 ## How moods are calculated
 
@@ -78,6 +83,9 @@ Debouncing and mood hysteresis prevent the rabbit from flickering between moods 
 Available now:
 
 - Side-panel pet home and three-step adoption
+- Free page roaming, left-click fleeing, and a right-click control menu
+- Wave, hop, nap, and alert mood actions
+- Long-idle tab reminders with a 30-minute cooldown
 - Live browser-load score with contributing reasons
 - Four-state SVG animation with reduced-motion support
 - Local preferences, versioned storage, migrations, and corrupt/future-data protection
@@ -88,7 +96,7 @@ Planned:
 
 - A 25-minute focus timer and completion celebrations
 - An optional tab-organizing assistant; closing, moving, or grouping tabs will always require preview and confirmation
-- A richer character animation, decoration, and progression system
+- A richer decoration and progression system
 - Chrome Web Store release, store artwork, and a privacy-policy page
 - Edge and Firefox support
 
@@ -103,6 +111,10 @@ It is a companion, not a productivity score. You can choose limits that match yo
 **Will it close tabs automatically?**
 
 No. The current version never closes, moves, or groups tabs. Any future organizing feature will require explicit confirmation.
+
+**How do I hide the rabbit on web pages?**
+
+Right-click the rabbit and choose **Hide roaming rabbit**. You can turn it back on from Tabbit settings, and idle-tab reminders have their own switch.
 
 **What happens to my data if I uninstall it?**
 

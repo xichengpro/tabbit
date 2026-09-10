@@ -1,6 +1,6 @@
 import { calculateLoad, isStaleSnapshot, selectMoodWithHysteresis } from '../domain/load-engine';
 import { captureBrowserSnapshot } from '../services/browser-snapshot';
-import { getPetState, getSettings, recordTabOpen, setPetState } from '../services/storage';
+import { getPetState, getSettings, recordTabOpen, setPetState, setSettings } from '../services/storage';
 import { browser } from 'wxt/browser';
 
 const REFRESH_ALARM = 'refresh-tabbit-state';
@@ -32,6 +32,7 @@ async function refreshStateNow(): Promise<void> {
     ...current,
     loadScore: load.score,
     loadReasons: load.reasons,
+    staleTabCount: snapshot.staleCount,
     mood: mood.mood,
     moodCandidate: mood.moodCandidate,
     moodCandidateSamples: mood.moodCandidateSamples,
@@ -81,6 +82,36 @@ export default defineBackground(() => {
           reportRefreshFailure(error);
           sendResponse({ ok: false });
         });
+      return true;
+    }
+    if (message?.type === 'TABBIT_UPDATE_ROAMING_SETTINGS') {
+      void (async () => {
+        const settings = await getSettings();
+        const payload = message.payload as {
+          roamingEnabled?: unknown;
+          staleRemindersEnabled?: unknown;
+        } | undefined;
+        const next = {
+          ...settings,
+          ...(typeof payload?.roamingEnabled === 'boolean'
+            ? { roamingEnabled: payload.roamingEnabled }
+            : {}),
+          ...(typeof payload?.staleRemindersEnabled === 'boolean'
+            ? { staleRemindersEnabled: payload.staleRemindersEnabled }
+            : {})
+        };
+        const persisted = await setSettings(next);
+        sendResponse({ ok: persisted });
+      })().catch((error) => {
+        reportRefreshFailure(error);
+        sendResponse({ ok: false });
+      });
+      return true;
+    }
+    if (message?.type === 'TABBIT_OPEN_OPTIONS') {
+      void browser.runtime.openOptionsPage()
+        .then(() => sendResponse({ ok: true }))
+        .catch(() => sendResponse({ ok: false }));
       return true;
     }
     return false;

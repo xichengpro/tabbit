@@ -33,6 +33,7 @@ export const PetStateV1Schema = z.object({
   mood: PetMoodSchema,
   loadScore: z.number().int().min(0).max(100),
   loadReasons: z.array(LoadReasonSchema).max(3).default([]),
+  staleTabCount: z.number().int().nonnegative().optional(),
   moodCandidate: PetMoodSchema.optional(),
   moodCandidateSamples: z.number().int().min(0).max(10).optional(),
   moodCandidateSince: z.number().int().nonnegative().optional(),
@@ -53,7 +54,9 @@ export const UserSettingsV1Schema = z.object({
   reducedMotion: z.boolean(),
   notificationsEnabled: z.boolean(),
   quietHoursStart: z.number().int().min(0).max(23),
-  quietHoursEnd: z.number().int().min(0).max(23)
+  quietHoursEnd: z.number().int().min(0).max(23),
+  roamingEnabled: z.boolean().optional(),
+  staleRemindersEnabled: z.boolean().optional()
 }).refine((settings) => settings.hardTabLimit > settings.softTabLimit, {
   message: 'hardTabLimit must be greater than softTabLimit',
   path: ['hardTabLimit']
@@ -154,6 +157,7 @@ const PET_DEFAULTS = {
   mood: 'curious' as PetMood,
   loadScore: 0,
   loadReasons: [] as LoadReason[],
+  staleTabCount: 0,
   level: 1,
   xp: 0,
   leaves: 0,
@@ -167,7 +171,9 @@ const SETTINGS_DEFAULTS = {
   reducedMotion: false,
   notificationsEnabled: false,
   quietHoursStart: 23,
-  quietHoursEnd: 8
+  quietHoursEnd: 8,
+  roamingEnabled: true,
+  staleRemindersEnabled: true
 };
 
 const ONBOARDING_DEFAULTS = { completedAt: null };

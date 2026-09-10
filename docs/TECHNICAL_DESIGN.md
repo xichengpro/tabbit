@@ -10,7 +10,7 @@
 | 后台 | Extension Service Worker | 事件驱动；接受随时休眠和重建 |
 | 存储 | `chrome.storage.local/session` | MVP 无后端；设置与短期事件分离 |
 | 状态模型 | 纯函数规则引擎 | 可解释、可测试、不需要 AI |
-| 内容脚本 | MVP 不使用 | 避免网页权限、注入风险和性能开销 |
+| 内容脚本 | HTTP/HTTPS 页面上的隔离宠物图层 | 用 Shadow DOM 隔离样式与交互，不读取宿主页面内容 |
 | 遥测 | 默认无 | 验证隐私优先定位 |
 | 最低版本 | Chrome 114 | Side Panel API 基线 |
 
@@ -27,6 +27,7 @@ flowchart TD
     S --> L[(Local / Session Storage)]
     B --> M[Runtime Messages]
     M --> P[Side Panel UI]
+    M --> C[Roaming Pet Content Script]
     O[Options UI] --> S
 ```
 
@@ -38,6 +39,8 @@ flowchart TD
 - `reward-engine.ts`（待实现）：奖励幂等、每日上限和升级；
 - `storage.ts`：键名、默认值、读写和迁移；
 - `sidepanel`：渲染状态、发出用户意图，不直接包含业务规则；
+- `tabbit.content.tsx`：在普通网页创建 Shadow DOM 宠物图层，处理移动、情绪动作、点击和本地提醒；
+- `roaming.ts`：纯函数计算漫游目标、逃跑位置和心情动作；
 - `options`：设置、隐私和数据管理；
 - `organizer`（P1）：仅在获得可选权限后读取 URL/标题并生成候选。
 
@@ -61,9 +64,11 @@ flowchart TD
 | --- | --- | --- |
 | `storage` | 保存宠物、设置、奖励和本地会话 | 不同步到自建服务器 |
 | `alarms` | 每分钟校准状态、完成专注 | 不用于频繁后台轮询网络 |
-| `sidePanel` | 提供常驻侧边栏 UI | 不注入网页 |
+| `sidePanel` | 提供常驻侧边栏 UI | 不访问网页内容 |
 
 `chrome.tabs` 命名空间本身可在 Service Worker 中使用；读取 URL、标题、favicon 等敏感字段才需要 `tabs` 或 host permission。MVP 只使用数量、活跃时间、声音、固定状态等非正文信息。
+
+网页宠物通过静态内容脚本匹配 `http://*/*` 与 `https://*/*`。脚本只挂载扩展自有的 Shadow DOM，不查询或遍历页面 DOM，不读取 `document.title`、`location.href`、表单、选择内容或输入事件，也不向远程服务发送数据。设置关闭后组件不渲染；浏览器内部页、扩展页及商店保护页不会运行该脚本。最终 Manifest 的 API 权限、host permissions 和内容脚本匹配范围都由 CI 白名单审计。
 
 ### P1 可选权限
 
@@ -76,7 +81,7 @@ flowchart TD
 
 ### 禁止权限
 
-MVP 不声明：`history`、`bookmarks`、`downloads`、`cookies`、`webRequest`、`scripting`、`<all_urls>` 或任意 host permission。
+MVP 不声明：`history`、`bookmarks`、`downloads`、`cookies`、`webRequest`、`scripting`、`<all_urls>` 或任意显式 host permission。允许的内容脚本范围仅为分别列出的 HTTP/HTTPS 匹配规则。
 
 ## 5. 事件模型
 
@@ -89,7 +94,7 @@ MVP 不声明：`history`、`bookmarks`、`downloads`、`cookies`、`webRequest`
 | `tabs.onActivated` | 重算陈旧数量 | 需要防抖 |
 | `alarms.onAlarm` | 每分钟校准；专注完成 | 按 alarm 名路由 |
 | `storage.onChanged` | UI/后台同步设置变化 | 避免写回循环 |
-| `runtime.onMessage` | UI 请求刷新/开始专注 | 验证消息类型与 payload |
+| `runtime.onMessage` | UI 请求刷新、更新网页宠物偏好、打开设置 | 验证消息类型与 payload |
 
 高频事件采用 250 ms trailing debounce 合并。alarm 是纠偏而非实时性的唯一来源。
 
@@ -106,6 +111,7 @@ interface PetStateV1 {
   level: number;
   xp: number;
   leaves: number;
+  staleTabCount?: number;
   lastUpdatedAt: number;
   focusEndsAt?: number;
   celebrationEndsAt?: number;
@@ -118,6 +124,8 @@ interface UserSettingsV1 {
   staleAfterHours: number;
   reducedMotion: boolean;
   notificationsEnabled: boolean;
+  roamingEnabled?: boolean;
+  staleRemindersEnabled?: boolean;
   quietHoursStart: number;
   quietHoursEnd: number;
 }

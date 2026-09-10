@@ -49,6 +49,22 @@ describe('storage schemas and migrations', () => {
     expect(migrateSettings(value)).toEqual({ status: 'current', value });
   });
 
+  it('accepts optional roaming preferences without breaking older v1 data', () => {
+    const value = {
+      schemaVersion: 1 as const,
+      softTabLimit: 20,
+      hardTabLimit: 50,
+      staleAfterHours: 24,
+      reducedMotion: false,
+      notificationsEnabled: false,
+      quietHoursStart: 23,
+      quietHoursEnd: 8,
+      roamingEnabled: false,
+      staleRemindersEnabled: true
+    };
+    expect(migrateSettings(value)).toEqual({ status: 'current', value });
+  });
+
   it('migrates a legacy record deterministically and can be retried', () => {
     const legacy = { schemaVersion: 0, focusRewards: 2, cleanupRewards: 1 };
     const first = migrateRewardLedger(legacy);

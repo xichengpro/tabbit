@@ -101,6 +101,10 @@ export const messageCatalog = {
   'options.softLimit': '舒适标签页数量',
   'options.hardLimit': '拥挤标签页数量',
   'options.reducedMotion': '减少动画',
+  'options.roamingTitle': '网页小兔子',
+  'options.roamingHint': '小兔子只在普通 HTTP/HTTPS 页面上活动，不读取页面正文、标题、网址或表单。',
+  'options.roamingEnabled': '让小兔子在网页上自由活动',
+  'options.staleRemindersEnabled': '提醒我有很久没动的标签页',
   'options.save': '保存设置',
   'options.saving': '正在保存…',
   'options.saved': '已保存',
@@ -111,7 +115,25 @@ export const messageCatalog = {
   'options.adoptionHint': '不会删除名称、成长或设置；下次打开侧边栏时会重新显示领养流程。',
   'options.adoptionButton': '重新打开领养流程',
   'options.adoptionReady': '已准备好',
-  'options.privacyHint': '默认只保存聚合数字，不读取网页正文，也不会把数据上传到服务器。'
+  'options.privacyHint': '默认只保存聚合数字，不读取网页正文，也不会把数据上传到服务器。',
+  'roaming.petAria': '{name} 正在网页上散步。左键让它逃跑，右键打开菜单。',
+  'roaming.arrived': '{name} 出来散步啦。',
+  'roaming.flee': '嘿嘿，抓不到我～',
+  'roaming.calm': '这里很安静，我慢慢逛逛。',
+  'roaming.curious': '这个页面闻起来很新鲜。',
+  'roaming.busy': '今天有点热闹，我跑两圈。',
+  'roaming.overwhelmed': '标签森林有点挤，我先抖抖耳朵。',
+  'roaming.sleeping': 'Zzz…我先眯一小会儿。',
+  'roaming.celebrating': '完成啦！跳一下！',
+  'roaming.staleReminder': '有 {count} 个标签页很久没动了，要不要找时间看看？',
+  'roaming.selected': '已选中 {name}',
+  'roaming.closeMenu': '关闭小兔子菜单',
+  'roaming.menuHint': '左键点击它会逃跑。',
+  'roaming.remindersOn': '关闭休眠标签提醒',
+  'roaming.remindersOff': '开启休眠标签提醒',
+  'roaming.openSettings': '打开完整设置',
+  'roaming.hide': '收起网页小兔子',
+  'roaming.updateError': '刚才的设置没有保存成功。'
 } as const;
 
 export type MessageKey = keyof typeof messageCatalog;

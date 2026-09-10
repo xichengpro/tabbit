@@ -2,31 +2,59 @@ import { appendFileSync, readFileSync } from 'node:fs';
 
 const manifestPath = process.argv[2] ?? '.output/chrome-mv3/manifest.json';
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-const expectedPermissions = ['alarms', 'sidePanel', 'storage'];
+const expectedPermissions = ['alarms', 'sidePanel', 'storage'].sort();
+const expectedHostPermissions = [];
+const expectedContentMatches = ['http://*/*', 'https://*/*'].sort();
 const actualPermissions = [...(manifest.permissions ?? [])].sort();
-const expected = [...expectedPermissions].sort();
-const missing = expected.filter((permission) => !actualPermissions.includes(permission));
-const unexpected = actualPermissions.filter((permission) => !expected.includes(permission));
+const actualHostPermissions = [...(manifest.host_permissions ?? [])].sort();
+const actualContentMatches = [...new Set(
+  (manifest.content_scripts ?? []).flatMap((contentScript) => contentScript.matches ?? [])
+)].sort();
+
+function compare(actual, approved) {
+  return {
+    missing: approved.filter((value) => !actual.includes(value)),
+    unexpected: actual.filter((value) => !approved.includes(value))
+  };
+}
+
+function describeDiff(diff) {
+  return diff.missing.length === 0 && diff.unexpected.length === 0
+    ? '(clean)'
+    : `missing=[${diff.missing.join(', ')}] unexpected=[${diff.unexpected.join(', ')}]`;
+}
+
+const permissionDiff = compare(actualPermissions, expectedPermissions);
+const hostPermissionDiff = compare(actualHostPermissions, expectedHostPermissions);
+const contentMatchDiff = compare(actualContentMatches, expectedContentMatches);
+const clean = [permissionDiff, hostPermissionDiff, contentMatchDiff]
+  .every((diff) => diff.missing.length === 0 && diff.unexpected.length === 0);
 
 console.log(`Manifest: ${manifestPath}`);
-console.log(`Permissions: ${actualPermissions.length > 0 ? actualPermissions.join(', ') : '(none)'}`);
-console.log(`Expected: ${expected.join(', ')}`);
-console.log(`Permission diff: ${missing.length === 0 && unexpected.length === 0 ? '(clean)' : `missing=[${missing.join(', ')}] unexpected=[${unexpected.join(', ')}]`}`);
+console.log(`Permissions: ${actualPermissions.join(', ') || '(none)'}`);
+console.log(`Permission diff: ${describeDiff(permissionDiff)}`);
+console.log(`Host permissions: ${actualHostPermissions.join(', ') || '(none)'}`);
+console.log(`Host permission diff: ${describeDiff(hostPermissionDiff)}`);
+console.log(`Content-script matches: ${actualContentMatches.join(', ') || '(none)'}`);
+console.log(`Content-script match diff: ${describeDiff(contentMatchDiff)}`);
 
 if (process.env.GITHUB_STEP_SUMMARY) {
   const summary = [
-    '## Manifest permission review',
+    '## Manifest access-scope review',
     '',
     `- Manifest: \`${manifestPath}\``,
-    `- Actual permissions: \`${actualPermissions.join('`, `') || '(none)'}\``,
-    `- Expected permissions: \`${expected.join('`, ')}\``,
-    `- Diff: ${missing.length === 0 && unexpected.length === 0 ? 'clean' : `missing=${missing.join(', ') || '(none)'}, unexpected=${unexpected.join(', ') || '(none)'}`}`,
+    `- Permissions: \`${actualPermissions.join('`, `') || '(none)'}\``,
+    `- Permission diff: ${describeDiff(permissionDiff)}`,
+    `- Host permissions: \`${actualHostPermissions.join('`, `') || '(none)'}\``,
+    `- Host permission diff: ${describeDiff(hostPermissionDiff)}`,
+    `- Content-script matches: \`${actualContentMatches.join('`, `') || '(none)'}\``,
+    `- Content-script match diff: ${describeDiff(contentMatchDiff)}`,
     ''
   ].join('\n');
   appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`);
 }
 
-if (missing.length > 0 || unexpected.length > 0) {
-  console.error('Manifest permissions differ from the approved MVP set.');
+if (!clean) {
+  console.error('Manifest access scope differs from the approved set.');
   process.exit(1);
 }
