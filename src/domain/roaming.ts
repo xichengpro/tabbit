@@ -11,9 +11,13 @@ export interface RoamingViewport {
 }
 
 export type RoamingAction = 'idle' | 'hop' | 'wave' | 'nap' | 'alert' | 'flee' | 'selected';
+export type RoamingObstacleCheck = (point: RoamingPoint) => boolean;
 
 export const ROAMING_PET_SIZE = 112;
 export const ROAMING_PADDING = 12;
+const MIN_ROAMING_STEP = 110;
+const MAX_ROAMING_STEP = 360;
+const TARGET_ATTEMPTS = 10;
 
 function axisMaximum(length: number, size: number, padding: number): number {
   return Math.max(padding, length - size - padding);
@@ -34,19 +38,31 @@ export function clampRoamingPoint(
 export function chooseRoamingTarget(
   viewport: RoamingViewport,
   current: RoamingPoint,
-  random: () => number = Math.random
+  random: () => number = Math.random,
+  isBlocked: RoamingObstacleCheck = () => false
 ): RoamingPoint {
-  const maxX = axisMaximum(viewport.width, ROAMING_PET_SIZE, ROAMING_PADDING);
-  const maxY = axisMaximum(viewport.height, ROAMING_PET_SIZE, ROAMING_PADDING);
-  let candidate = current;
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    candidate = {
-      x: ROAMING_PADDING + random() * Math.max(0, maxX - ROAMING_PADDING),
-      y: ROAMING_PADDING + random() * Math.max(0, maxY - ROAMING_PADDING)
-    };
-    if (Math.hypot(candidate.x - current.x, candidate.y - current.y) >= 120) break;
+  let fallback = clampRoamingPoint(current, viewport);
+  let fallbackDistance = 0;
+  for (let attempt = 0; attempt < TARGET_ATTEMPTS; attempt += 1) {
+    const angle = random() * Math.PI * 2;
+    const distance = MIN_ROAMING_STEP + random() * (MAX_ROAMING_STEP - MIN_ROAMING_STEP);
+    const candidate = clampRoamingPoint({
+      x: current.x + Math.cos(angle) * distance,
+      y: current.y + Math.sin(angle) * distance
+    }, viewport);
+    const actualDistance = Math.hypot(candidate.x - current.x, candidate.y - current.y);
+    if (actualDistance > fallbackDistance) {
+      fallback = candidate;
+      fallbackDistance = actualDistance;
+    }
+    if (actualDistance >= MIN_ROAMING_STEP * 0.7 && !isBlocked(candidate)) return candidate;
   }
-  return clampRoamingPoint(candidate, viewport);
+  return fallback;
+}
+
+export function calculateMovementDuration(from: RoamingPoint, to: RoamingPoint): number {
+  const distance = Math.hypot(to.x - from.x, to.y - from.y);
+  return Math.round(Math.min(2_800, Math.max(900, distance / 0.16)));
 }
 
 export function chooseFleeTarget(

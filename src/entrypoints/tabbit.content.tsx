@@ -3,6 +3,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent
 } from 'react';
@@ -11,10 +12,12 @@ import { createShadowRootUi } from 'wxt/utils/content-script-ui/shadow-root';
 import { browser } from 'wxt/browser';
 import TabbitSprite, { type SpriteState } from '../components/TabbitSprite';
 import {
+  calculateMovementDuration,
   chooseFleeTarget,
   chooseMoodAction,
   chooseRoamingTarget,
   clampRoamingPoint,
+  ROAMING_PET_SIZE,
   type RoamingAction,
   type RoamingPoint,
   type RoamingViewport
@@ -91,6 +94,11 @@ function parseOverlayState(values: Record<string, unknown>): OverlayState {
         ...(typeof rawSettings.roamingEnabled === 'boolean' ? { roamingEnabled: rawSettings.roamingEnabled } : {}),
         ...(typeof rawSettings.staleRemindersEnabled === 'boolean'
           ? { staleRemindersEnabled: rawSettings.staleRemindersEnabled }
+          : {}),
+        ...(typeof rawSettings.roamingOpacity === 'number' &&
+          Number.isInteger(rawSettings.roamingOpacity) &&
+          rawSettings.roamingOpacity >= 30 && rawSettings.roamingOpacity <= 100
+          ? { roamingOpacity: rawSettings.roamingOpacity }
           : {})
       }
     : rawSettings === undefined
@@ -115,10 +123,58 @@ function initialPosition(): RoamingPoint {
   return clampRoamingPoint({ x: window.innerWidth - 150, y: window.innerHeight - 160 }, viewport());
 }
 
+interface CaretPositionLike {
+  offsetNode: Node;
+  offset: number;
+}
+
+type TextHitTestDocument = Document & {
+  caretPositionFromPoint?: (x: number, y: number) => CaretPositionLike | null;
+  caretRangeFromPoint?: (x: number, y: number) => Range | null;
+};
+
+function pointTouchesRenderedText(x: number, y: number): boolean {
+  const hitTestDocument = document as TextHitTestDocument;
+  const caretPosition = hitTestDocument.caretPositionFromPoint?.(x, y);
+  const fallbackRange = caretPosition ? null : hitTestDocument.caretRangeFromPoint?.(x, y);
+  const node = caretPosition?.offsetNode ?? fallbackRange?.startContainer;
+  const offset = caretPosition?.offset ?? fallbackRange?.startOffset ?? 0;
+  if (!node || node.nodeType !== Node.TEXT_NODE) return false;
+
+  const textLength = (node as Text).length;
+  if (textLength === 0) return false;
+  const range = document.createRange();
+  range.setStart(node, Math.max(0, Math.min(textLength - 1, offset - 1)));
+  range.setEnd(node, Math.min(textLength, Math.max(1, offset + 1)));
+  return [...range.getClientRects()].some((rect) =>
+    rect.width > 0 && rect.height > 0 &&
+    x >= rect.left - 3 && x <= rect.right + 3 &&
+    y >= rect.top - 3 && y <= rect.bottom + 3
+  );
+}
+
+function overlapsRenderedText(point: RoamingPoint): boolean {
+  const size = ROAMING_PET_SIZE;
+  const samples = [
+    [0.3, 0.25], [0.7, 0.25], [0.5, 0.52], [0.3, 0.82], [0.7, 0.82]
+  ];
+  return samples.some(([xRatio, yRatio]) =>
+    pointTouchesRenderedText(point.x + size * xRatio!, point.y + size * yRatio!)
+  );
+}
+
+function pathOverlapsRenderedText(from: RoamingPoint, to: RoamingPoint): boolean {
+  return [0.34, 0.67, 1].some((progress) => overlapsRenderedText({
+    x: from.x + (to.x - from.x) * progress,
+    y: from.y + (to.y - from.y) * progress
+  }));
+}
+
 function RoamingTabbit({ initial }: { initial: OverlayState }) {
   const [snapshot, setSnapshot] = useState(initial);
   const [position, setPosition] = useState(initialPosition);
   const positionRef = useRef(position);
+  const [movementDuration, setMovementDuration] = useState(1_800);
   const [facingLeft, setFacingLeft] = useState(false);
   const [action, setAction] = useState<RoamingAction>('wave');
   const [message, setMessage] = useState(() => t('roaming.arrived', { name: initial.pet.name }));
@@ -172,22 +228,29 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
     if (!enabled || reducedMotion || menuOpen) return;
     let moveTimer: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
-    const scheduleMove = () => {
-      moveTimer = setTimeout(() => {
-        if (cancelled) return;
-        if (document.visibilityState === 'visible') {
-          const current = positionRef.current;
-          const next = chooseRoamingTarget(viewport(), current);
-          setFacingLeft(next.x < current.x);
-          setPosition(next);
-          const nextAction = chooseMoodAction(snapshot.pet.mood);
-          showAction(nextAction, nextAction === 'nap' ? 2_400 : 1_300);
-          showMessage(t(moodLineKey[snapshot.pet.mood]), 2_800);
-        }
-        scheduleMove();
-      }, 2_700 + Math.random() * 3_300);
+    const move = () => {
+      if (cancelled) return;
+      let nextDelay = 900;
+      if (document.visibilityState === 'visible') {
+        const current = positionRef.current;
+        const next = chooseRoamingTarget(
+          viewport(),
+          current,
+          Math.random,
+          (candidate) => pathOverlapsRenderedText(current, candidate)
+        );
+        const duration = calculateMovementDuration(current, next);
+        setMovementDuration(duration);
+        setFacingLeft(next.x < current.x);
+        setPosition(next);
+        const nextAction = chooseMoodAction(snapshot.pet.mood);
+        showAction(nextAction, nextAction === 'nap' ? 2_400 : 1_300);
+        if (Math.random() < 0.35) showMessage(t(moodLineKey[snapshot.pet.mood]), 2_800);
+        nextDelay = duration + 100 + Math.random() * 350;
+      }
+      moveTimer = setTimeout(move, nextDelay);
     };
-    scheduleMove();
+    moveTimer = setTimeout(move, 350);
     return () => {
       cancelled = true;
       if (moveTimer) clearTimeout(moveTimer);
@@ -223,7 +286,11 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
     if (actionTimer.current) clearTimeout(actionTimer.current);
   }, []);
 
-  async function updatePreference(payload: { roamingEnabled?: boolean; staleRemindersEnabled?: boolean }) {
+  async function updatePreference(payload: {
+    roamingEnabled?: boolean;
+    staleRemindersEnabled?: boolean;
+    roamingOpacity?: number;
+  }) {
     const response = await browser.runtime.sendMessage({
       type: 'TABBIT_UPDATE_ROAMING_SETTINGS',
       payload
@@ -250,6 +317,7 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
       ? { x: event.clientX, y: event.clientY }
       : { x: positionRef.current.x + 56, y: positionRef.current.y + 56 };
     const next = chooseFleeTarget(viewport(), pointer);
+    setMovementDuration(650);
     setFacingLeft(next.x < positionRef.current.x);
     setPosition(next);
     showAction('flee', 900);
@@ -276,10 +344,15 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
     menuLeft ? 'menuLeft' : '',
     menuTop ? 'menuTop' : ''
   ].filter(Boolean).join(' ');
+  const roamerStyle = {
+    transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+    '--tabbit-move-duration': `${movementDuration}ms`,
+    '--tabbit-opacity': String((snapshot.settings.roamingOpacity ?? 100) / 100)
+  } as CSSProperties;
 
   return (
     <div className="tabbitRoamingLayer">
-      <div className={classNames} style={{ transform: `translate3d(${position.x}px, ${position.y}px, 0)` }}>
+      <div className={classNames} style={roamerStyle}>
         {message && !menuOpen && (
           <div className="roamingSpeech" role={announceMessage ? 'status' : undefined}>
             {message}

@@ -160,6 +160,7 @@ M2 退出条件：在重复事件、休眠和重启下不重复发奖，成长�
 14. `[M3] Add 24-hour close-and-restore snapshot`
 15. `[M4] Draft and verify privacy policy`
 16. `[M4] Produce Chrome Web Store assets and listing copy`
+17. `[M2] Support locally uploaded pet photos and animated images`
 
 ## 5. PR 策略
 
@@ -243,4 +244,3 @@ M2 退出条件：在重复事件、休眠和重启下不重复发奖，成长�
 6. 用简单几何图形或占位 sprite 做四状态可玩原型；
 7. 找 3 位多标签用户观察第一次使用；
 8. 根据“是否觉得它活着”决定美术投入，而不是先扩功能。
-

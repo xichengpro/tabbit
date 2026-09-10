@@ -60,9 +60,24 @@ describe('storage schemas and migrations', () => {
       quietHoursStart: 23,
       quietHoursEnd: 8,
       roamingEnabled: false,
-      staleRemindersEnabled: true
+      staleRemindersEnabled: true,
+      roamingOpacity: 65
     };
     expect(migrateSettings(value)).toEqual({ status: 'current', value });
+  });
+
+  it('rejects an opacity outside the visible and usable range', () => {
+    expect(migrateSettings({
+      schemaVersion: 1,
+      softTabLimit: 20,
+      hardTabLimit: 50,
+      staleAfterHours: 24,
+      reducedMotion: false,
+      notificationsEnabled: false,
+      quietHoursStart: 23,
+      quietHoursEnd: 8,
+      roamingOpacity: 10
+    })).toMatchObject({ status: 'invalid' });
   });
 
   it('migrates a legacy record deterministically and can be retried', () => {

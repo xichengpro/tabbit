@@ -56,7 +56,8 @@ export const UserSettingsV1Schema = z.object({
   quietHoursStart: z.number().int().min(0).max(23),
   quietHoursEnd: z.number().int().min(0).max(23),
   roamingEnabled: z.boolean().optional(),
-  staleRemindersEnabled: z.boolean().optional()
+  staleRemindersEnabled: z.boolean().optional(),
+  roamingOpacity: z.number().int().min(30).max(100).optional()
 }).refine((settings) => settings.hardTabLimit > settings.softTabLimit, {
   message: 'hardTabLimit must be greater than softTabLimit',
   path: ['hardTabLimit']
@@ -173,7 +174,8 @@ const SETTINGS_DEFAULTS = {
   quietHoursStart: 23,
   quietHoursEnd: 8,
   roamingEnabled: true,
-  staleRemindersEnabled: true
+  staleRemindersEnabled: true,
+  roamingOpacity: 100
 };
 
 const ONBOARDING_DEFAULTS = { completedAt: null };

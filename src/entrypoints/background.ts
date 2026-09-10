@@ -90,6 +90,7 @@ export default defineBackground(() => {
         const payload = message.payload as {
           roamingEnabled?: unknown;
           staleRemindersEnabled?: unknown;
+          roamingOpacity?: unknown;
         } | undefined;
         const next = {
           ...settings,
@@ -98,6 +99,9 @@ export default defineBackground(() => {
             : {}),
           ...(typeof payload?.staleRemindersEnabled === 'boolean'
             ? { staleRemindersEnabled: payload.staleRemindersEnabled }
+            : {}),
+          ...(typeof payload?.roamingOpacity === 'number' && Number.isInteger(payload.roamingOpacity)
+            ? { roamingOpacity: payload.roamingOpacity }
             : {})
         };
         const persisted = await setSettings(next);

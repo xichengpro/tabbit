@@ -16,7 +16,7 @@
   width: 112px;
   height: 112px;
   pointer-events: auto;
-  transition: transform 2.1s cubic-bezier(.22, .75, .28, 1);
+  transition: transform var(--tabbit-move-duration, 1800ms) cubic-bezier(.34, .06, .24, 1);
   will-change: transform;
 }
 
@@ -35,8 +35,15 @@
   color: inherit;
   background: transparent;
   cursor: pointer;
+  opacity: var(--tabbit-opacity, 1);
   filter: drop-shadow(0 8px 8px rgba(43, 58, 47, .2));
+  transition: opacity .18s ease, filter .18s ease;
   -webkit-tap-highlight-color: transparent;
+}
+
+.tabbitPetButton:hover,
+.tabbitPetButton:focus-visible {
+  opacity: 1;
 }
 
 .tabbitPetButton:focus-visible {
@@ -51,7 +58,7 @@
 }
 
 .facingLeft .rabbitVisual { transform: scaleX(-1); }
-.action-selected .tabbitPetButton { box-shadow: 0 0 0 4px #fff, 0 0 0 8px #72a777; }
+.action-selected .tabbitPetButton { opacity: 1; box-shadow: 0 0 0 4px #fff, 0 0 0 8px #72a777; }
 .action-hop .rabbitVisual { animation: roaming-hop .72s ease-in-out 2; }
 .action-wave .rabbitVisual { animation: roaming-wave 1.2s ease-in-out; }
 .action-nap .rabbitVisual { animation: roaming-nap 2.4s ease-in-out; }

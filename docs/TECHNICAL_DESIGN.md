@@ -68,7 +68,7 @@ flowchart TD
 
 `chrome.tabs` 命名空间本身可在 Service Worker 中使用；读取 URL、标题、favicon 等敏感字段才需要 `tabs` 或 host permission。MVP 只使用数量、活跃时间、声音、固定状态等非正文信息。
 
-网页宠物通过静态内容脚本匹配 `http://*/*` 与 `https://*/*`。脚本只挂载扩展自有的 Shadow DOM，不查询或遍历页面 DOM，不读取 `document.title`、`location.href`、表单、选择内容或输入事件，也不向远程服务发送数据。设置关闭后组件不渲染；浏览器内部页、扩展页及商店保护页不会运行该脚本。最终 Manifest 的 API 权限、host permissions 和内容脚本匹配范围都由 CI 白名单审计。
+网页宠物通过静态内容脚本匹配 `http://*/*` 与 `https://*/*`。脚本挂载扩展自有的 Shadow DOM；为了选择不挡字的路线，只对少量候选路径坐标执行 caret/range 命中测试并读取字符渲染矩形，不读取字符值、`document.title`、`location.href`、表单、选择内容或输入事件，也不向远程服务发送数据。设置关闭后组件不渲染；浏览器内部页、扩展页及商店保护页不会运行该脚本。最终 Manifest 的 API 权限、host permissions 和内容脚本匹配范围都由 CI 白名单审计。
 
 ### P1 可选权限
 
@@ -126,6 +126,7 @@ interface UserSettingsV1 {
   notificationsEnabled: boolean;
   roamingEnabled?: boolean;
   staleRemindersEnabled?: boolean;
+  roamingOpacity?: number; // 30–100
   quietHoursStart: number;
   quietHoursEnd: number;
 }

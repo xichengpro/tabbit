@@ -14,6 +14,7 @@ Tabbit does not judge your productivity or pressure you to close everything. It 
 
 - **A responsive tab rabbit**: calm, curious, busy, and overwhelmed states, each with its own color and animation.
 - **Page roaming**: Tabbit wanders around regular web pages; left-click to make it flee, or right-click to select it and open its controls.
+- **Smoother and less obstructive**: nearby continuous movement prefers paths that do not cross or cover visible text, with adjustable opacity from 30% to 100%.
 - **Expressive actions**: waving, hopping, napping, alert ear shakes, and mood-aware speech.
 - **Idle-tab reminders**: a gentle in-page bubble appears when tabs have been untouched for a long time, with a separate off switch.
 - **Plain-language explanations**: see not only a load score, but also whether tab count, opening bursts, idle tabs, or audible tabs contributed most.
@@ -32,7 +33,7 @@ The Tabbit MVP does not read:
 
 Pet state and preferences stay in the current browser. There is no registration, application backend, or browsing-data upload.
 
-To display the rabbit on a page, Tabbit's content script creates an isolated Shadow DOM layer on regular `http://` and `https://` pages. It does not read or analyze page DOM, content, titles, URLs, forms, or input. It cannot run on browser-internal pages such as `chrome://`. You can disable the roaming pet from its right-click menu or the options page.
+To display the rabbit on a page, Tabbit's content script creates an isolated Shadow DOM layer on regular `http://` and `https://` pages. To avoid covering text, it only checks rendered character rectangles at candidate landing spots; it does not read, store, or upload the characters themselves. It also does not read titles, URLs, forms, or input, and cannot run on browser-internal pages such as `chrome://`. You can disable the roaming pet from its right-click menu or the options page.
 
 The extension currently requests only three permissions:
 
@@ -97,6 +98,7 @@ Planned:
 - A 25-minute focus timer and completion celebrations
 - An optional tab-organizing assistant; closing, moving, or grouping tabs will always require preview and confirmation
 - A richer decoration and progression system
+- User-uploaded pet photos or animations, stored locally with validation and a restore-default option
 - Chrome Web Store release, store artwork, and a privacy-policy page
 - Edge and Firefox support
 

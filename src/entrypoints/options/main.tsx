@@ -64,6 +64,10 @@ function Options() {
         <p className="hint">{t('options.roamingHint')}</p>
         <label className="check"><input type="checkbox" checked={settings.roamingEnabled ?? true} onChange={(e) => { update({ ...settings, roamingEnabled: e.target.checked }); setError(null); setSaved(false); }} />{t('options.roamingEnabled')}</label>
         <label className="check"><input type="checkbox" disabled={!(settings.roamingEnabled ?? true)} checked={settings.staleRemindersEnabled ?? true} onChange={(e) => { update({ ...settings, staleRemindersEnabled: e.target.checked }); setError(null); setSaved(false); }} />{t('options.staleRemindersEnabled')}</label>
+        <label>
+          {t('options.roamingOpacity', { value: settings.roamingOpacity ?? 100 })}
+          <input type="range" min="30" max="100" step="5" disabled={!(settings.roamingEnabled ?? true)} value={settings.roamingOpacity ?? 100} onChange={(e) => { update({ ...settings, roamingOpacity: Number(e.target.value) }); setError(null); setSaved(false); }} />
+        </label>
       </section>
       {error && <p className="formError" role="alert">{error}</p>}
       <button className="primary" disabled={saving} onClick={() => void save()}>{saved ? t('options.saved') : saving ? t('options.saving') : t('options.save')}</button>

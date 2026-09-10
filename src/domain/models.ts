@@ -60,6 +60,7 @@ export interface UserSettings {
   quietHoursEnd: number;
   roamingEnabled?: boolean;
   staleRemindersEnabled?: boolean;
+  roamingOpacity?: number;
 }
 
 export interface OnboardingState {
@@ -106,7 +107,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   quietHoursStart: 23,
   quietHoursEnd: 8,
   roamingEnabled: true,
-  staleRemindersEnabled: true
+  staleRemindersEnabled: true,
+  roamingOpacity: 100
 };
 
 export const DEFAULT_PET_STATE: PetState = {
