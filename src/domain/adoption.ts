@@ -31,12 +31,19 @@ export function sanitizePetName(value: string): string {
 export function validateAdoption(input: AdoptionInput): AdoptionValidationKey | null {
   const nameLength = Array.from(sanitizePetName(input.name)).length;
   if (nameLength < 1 || nameLength > 12) return 'validation.name';
-  if (!Number.isInteger(input.softTabLimit) || input.softTabLimit < 5 || input.softTabLimit > 300) {
+  return validateTabLimits(input.softTabLimit, input.hardTabLimit);
+}
+
+export function validateTabLimits(
+  softTabLimit: number,
+  hardTabLimit: number
+): Exclude<AdoptionValidationKey, 'validation.name'> | null {
+  if (!Number.isInteger(softTabLimit) || softTabLimit < 5 || softTabLimit > 300) {
     return 'validation.softLimit';
   }
-  if (!Number.isInteger(input.hardTabLimit) || input.hardTabLimit < 10 || input.hardTabLimit > 300) {
+  if (!Number.isInteger(hardTabLimit) || hardTabLimit < 10 || hardTabLimit > 300) {
     return 'validation.hardLimit';
   }
-  if (input.hardTabLimit <= input.softTabLimit) return 'validation.limitOrder';
+  if (hardTabLimit <= softTabLimit) return 'validation.limitOrder';
   return null;
 }

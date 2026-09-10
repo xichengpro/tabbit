@@ -54,6 +54,9 @@ export const UserSettingsV1Schema = z.object({
   notificationsEnabled: z.boolean(),
   quietHoursStart: z.number().int().min(0).max(23),
   quietHoursEnd: z.number().int().min(0).max(23)
+}).refine((settings) => settings.hardTabLimit > settings.softTabLimit, {
+  message: 'hardTabLimit must be greater than softTabLimit',
+  path: ['hardTabLimit']
 });
 
 export const OnboardingStateV1Schema = z.object({
@@ -99,7 +102,7 @@ export type MigrationResult<T> =
   | { status: 'invalid'; diagnostic: StorageDiagnostic }
   | { status: 'future'; raw: unknown; diagnostic: StorageDiagnostic };
 
-function readVersion(raw: unknown): number | undefined {
+export function getStorageSchemaVersion(raw: unknown): number | undefined {
   if (!raw || typeof raw !== 'object' || !('schemaVersion' in raw)) return undefined;
   const version = (raw as { schemaVersion?: unknown }).schemaVersion;
   return typeof version === 'number' && Number.isInteger(version) ? version : undefined;
@@ -110,7 +113,7 @@ function isRecord(raw: unknown): raw is Record<string, unknown> {
 }
 
 function futureResult<T>(key: StorageKind, raw: unknown): MigrationResult<T> | null {
-  const schemaVersion = readVersion(raw);
+  const schemaVersion = getStorageSchemaVersion(raw);
   if (schemaVersion !== undefined && schemaVersion > STORAGE_SCHEMA_VERSION) {
     return {
       status: 'future',
@@ -122,7 +125,7 @@ function futureResult<T>(key: StorageKind, raw: unknown): MigrationResult<T> | n
 }
 
 function invalidResult<T>(key: StorageKind, raw: unknown): MigrationResult<T> {
-  const schemaVersion = readVersion(raw);
+  const schemaVersion = getStorageSchemaVersion(raw);
   return { status: 'invalid', diagnostic: { key, code: 'INVALID', ...(schemaVersion === undefined ? {} : { schemaVersion }) } };
 }
 
@@ -139,7 +142,7 @@ function migrateLegacy<T>(key: StorageKind, raw: unknown, schema: z.ZodType<T>, 
   if (current.status === 'current') return current;
   if (!isRecord(raw)) return invalidResult<T>(key, raw);
 
-  const version = readVersion(raw);
+  const version = getStorageSchemaVersion(raw);
   if (version !== undefined && version !== 0) return current;
   const migrated = schema.safeParse({ ...defaults, ...raw, schemaVersion: STORAGE_SCHEMA_VERSION });
   if (!migrated.success) return invalidResult<T>(key, raw);

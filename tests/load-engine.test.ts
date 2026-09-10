@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { calculateLoad, calculateLoadScore, isStaleSnapshot, selectMood, selectMoodWithHysteresis } from '../src/domain/load-engine';
 import { DEFAULT_SETTINGS } from '../src/domain/models';
-import { sanitizePetName, validateAdoption } from '../src/domain/adoption';
+import { sanitizePetName, validateAdoption, validateTabLimits } from '../src/domain/adoption';
 
 describe('load engine', () => {
   it('keeps a small, quiet session calm', () => {
@@ -82,5 +82,12 @@ describe('adoption input', () => {
     expect(validateAdoption({ name: '', softTabLimit: 20, hardTabLimit: 50 })).toBe('validation.name');
     expect(validateAdoption({ name: '团团', softTabLimit: 50, hardTabLimit: 20 })).toBe('validation.limitOrder');
     expect(validateAdoption({ name: '团团', softTabLimit: 20, hardTabLimit: 50 })).toBeNull();
+  });
+
+  it('reuses the same tab-limit rules outside onboarding', () => {
+    expect(validateTabLimits(4, 50)).toBe('validation.softLimit');
+    expect(validateTabLimits(20, 9)).toBe('validation.hardLimit');
+    expect(validateTabLimits(50, 50)).toBe('validation.limitOrder');
+    expect(validateTabLimits(20, 50)).toBeNull();
   });
 });

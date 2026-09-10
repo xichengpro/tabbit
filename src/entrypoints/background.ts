@@ -9,11 +9,16 @@ const REFRESH_DEBOUNCE_MS = 250;
 let refreshTimer: ReturnType<typeof setTimeout> | undefined;
 let refreshQueue: Promise<void> = Promise.resolve();
 
+function reportRefreshFailure(error: unknown): void {
+  const message = error instanceof Error ? error.message : 'unknown error';
+  console.error(`Tabbit state refresh failed: ${message}`);
+}
+
 function scheduleRefresh(): void {
   if (refreshTimer) clearTimeout(refreshTimer);
   refreshTimer = setTimeout(() => {
     refreshTimer = undefined;
-    void refreshState();
+    void refreshState().catch(reportRefreshFailure);
   }, REFRESH_DEBOUNCE_MS);
 }
 
@@ -34,7 +39,8 @@ async function refreshStateNow(): Promise<void> {
     lastSnapshotAt: snapshot.capturedAt,
     lastUpdatedAt: Date.now()
   };
-  await setPetState(next);
+  const persisted = await setPetState(next);
+  if (!persisted) return;
   await browser.runtime.sendMessage({ type: 'TABBIT_STATE_UPDATED', payload: next }).catch(() => {});
 }
 
@@ -45,18 +51,22 @@ function refreshState(): Promise<void> {
 }
 
 export default defineBackground(() => {
-  browser.runtime.onInstalled.addListener(async () => {
-    await browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-    await browser.alarms.create(REFRESH_ALARM, { periodInMinutes: 1 });
-    await refreshState();
+  browser.runtime.onInstalled.addListener(() => {
+    void (async () => {
+      await browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+      await browser.alarms.create(REFRESH_ALARM, { periodInMinutes: 1 });
+      await refreshState();
+    })().catch(reportRefreshFailure);
   });
 
-  browser.runtime.onStartup.addListener(refreshState);
+  browser.runtime.onStartup.addListener(() => {
+    void refreshState().catch(reportRefreshFailure);
+  });
   browser.alarms.onAlarm.addListener((alarm) => {
-    if (alarm.name === REFRESH_ALARM) void refreshState();
+    if (alarm.name === REFRESH_ALARM) void refreshState().catch(reportRefreshFailure);
   });
   browser.tabs.onCreated.addListener(() => {
-    void recordTabOpen().then(scheduleRefresh);
+    void recordTabOpen().then(scheduleRefresh).catch(reportRefreshFailure);
   });
   browser.tabs.onRemoved.addListener((_tabId, info) => {
     if (!info.isWindowClosing) scheduleRefresh();
@@ -65,7 +75,12 @@ export default defineBackground(() => {
 
   browser.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === 'TABBIT_REFRESH') {
-      void refreshState().then(() => sendResponse({ ok: true }));
+      void refreshState()
+        .then(() => sendResponse({ ok: true }))
+        .catch((error) => {
+          reportRefreshFailure(error);
+          sendResponse({ ok: false });
+        });
       return true;
     }
     return false;

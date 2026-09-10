@@ -3,6 +3,7 @@ import {
   migratePetState,
   migrateRewardLedger,
   migrateSettings,
+  getStorageSchemaVersion,
   sanitizeDiagnostics
 } from '../src/domain/storage-schema';
 
@@ -19,6 +20,19 @@ describe('storage schemas and migrations', () => {
       status: 'invalid',
       diagnostic: { key: 'settings', code: 'INVALID', schemaVersion: 1 }
     });
+  });
+
+  it('rejects settings whose hard limit is not greater than the soft limit', () => {
+    expect(migrateSettings({
+      schemaVersion: 1,
+      softTabLimit: 50,
+      hardTabLimit: 50,
+      staleAfterHours: 24,
+      reducedMotion: false,
+      notificationsEnabled: false,
+      quietHoursStart: 23,
+      quietHoursEnd: 8
+    })).toMatchObject({ status: 'invalid' });
   });
 
   it('keeps valid v1 data semantically unchanged', () => {
@@ -59,5 +73,6 @@ describe('storage schemas and migrations', () => {
       items: [{ key: 'pet', code: 'FUTURE_VERSION', schemaVersion: 9 }]
     });
     expect(JSON.stringify(diagnostics)).not.toContain('私密宠物');
+    expect(getStorageSchemaVersion(raw)).toBe(9);
   });
 });
