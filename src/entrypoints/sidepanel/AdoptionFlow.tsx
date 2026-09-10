@@ -5,6 +5,7 @@ import {
   validateAdoption,
   type AdoptionInput
 } from '../../domain/adoption';
+import TabbitSprite from '../../components/TabbitSprite';
 
 interface AdoptionFlowProps {
   initialName: string;
@@ -65,7 +66,7 @@ export default function AdoptionFlow({ initialName, onComplete }: AdoptionFlowPr
 
       {step === 0 && (
         <section className="adoptionCard">
-          <div className="adoptionPet" aria-hidden="true">🐇</div>
+          <div className="adoptionPet"><TabbitSprite state="calm" label="平静的标签兔" /></div>
           <p className="eyebrow">HELLO, I’M TABBIt</p>
           <h1 id="adoption-title">有只小家伙想住进你的侧边栏</h1>
           <p>它会根据标签页的整体节奏作出反应，偶尔提醒你休息或整理。</p>
@@ -79,7 +80,7 @@ export default function AdoptionFlow({ initialName, onComplete }: AdoptionFlowPr
 
       {step === 1 && (
         <section className="adoptionCard">
-          <div className="adoptionPet small" aria-hidden="true">🐰</div>
+          <div className="adoptionPet small"><TabbitSprite state="curious" label="好奇的标签兔" /></div>
           <p className="eyebrow">STEP 2</p>
           <h1 id="adoption-title">先给它起个名字</h1>
           <p>默认叫团团。名字只保存在这台浏览器里。</p>
@@ -105,7 +106,7 @@ export default function AdoptionFlow({ initialName, onComplete }: AdoptionFlowPr
 
       {step === 2 && (
         <section className="adoptionCard">
-          <div className="adoptionPet small" aria-hidden="true">🐰</div>
+          <div className="adoptionPet small"><TabbitSprite state="curious" label="好奇的标签兔" /></div>
           <p className="eyebrow">STEP 3</p>
           <h1 id="adoption-title">让 {name || '团团'} 适应你的节奏</h1>
           <p>标签页多不等于效率低。这里只是决定它什么时候该温柔地提醒你。</p>

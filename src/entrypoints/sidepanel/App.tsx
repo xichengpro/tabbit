@@ -1,18 +1,29 @@
 import { useEffect, useState } from 'react';
-import { DEFAULT_PET_STATE, type LoadReasonCode, type PetState } from '../../domain/models';
-import { completeAdoption, getOnboardingState, getPetState } from '../../services/storage';
+import { DEFAULT_PET_STATE, type LoadReasonCode, type PetState, type PetMood } from '../../domain/models';
+import { completeAdoption, getOnboardingState, getPetState, getSettings } from '../../services/storage';
 import { browser } from 'wxt/browser';
 import type { AdoptionInput } from '../../domain/adoption';
 import AdoptionFlow from './AdoptionFlow';
+import TabbitSprite, { type SpriteState } from '../../components/TabbitSprite';
 
-const moodCopy: Record<PetState['mood'], { emoji: string; title: string; line: string }> = {
-  sleeping: { emoji: '🌙', title: '睡着啦', line: '今天的标签页森林很安静。' },
-  calm: { emoji: '🐰', title: '轻轻松松', line: '桌面很清爽，适合专心做一件事。' },
-  curious: { emoji: '🐇', title: '正在探险', line: '我闻到了几个新标签页的味道。' },
-  busy: { emoji: '🐰', title: '有点忙碌', line: '要不要先关掉几个已经看完的页面？' },
-  overwhelmed: { emoji: '🙈', title: '被标签页埋住了', line: '救救我——先整理五个就很棒。' },
-  focused: { emoji: '🎧', title: '专注中', line: '我替你守着门，先完成眼前这件事。' },
-  celebrating: { emoji: '🎉', title: '整理成功', line: '呼！又看见桌面啦。' }
+const moodCopy: Record<PetState['mood'], { title: string; line: string }> = {
+  sleeping: { title: '睡着啦', line: '今天的标签页森林很安静。' },
+  calm: { title: '轻轻松松', line: '桌面很清爽，适合专心做一件事。' },
+  curious: { title: '正在探险', line: '我闻到了几个新标签页的味道。' },
+  busy: { title: '有点忙碌', line: '要不要先关掉几个已经看完的页面？' },
+  overwhelmed: { title: '被标签页埋住了', line: '救救我——先整理五个就很棒。' },
+  focused: { title: '专注中', line: '我替你守着门，先完成眼前这件事。' },
+  celebrating: { title: '整理成功', line: '呼！又看见桌面啦。' }
+};
+
+const spriteState: Record<PetMood, SpriteState> = {
+  sleeping: 'calm',
+  calm: 'calm',
+  curious: 'curious',
+  busy: 'busy',
+  overwhelmed: 'overwhelmed',
+  focused: 'calm',
+  celebrating: 'curious'
 };
 
 const reasonCopy: Record<LoadReasonCode, string> = {
@@ -25,11 +36,13 @@ const reasonCopy: Record<LoadReasonCode, string> = {
 export default function App() {
   const [state, setState] = useState<PetState>(DEFAULT_PET_STATE);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
-    void Promise.all([getPetState(), getOnboardingState()]).then(([pet, onboarding]) => {
+    void Promise.all([getPetState(), getOnboardingState(), getSettings()]).then(([pet, onboarding, settings]) => {
       setState(pet);
       setOnboarded(onboarding.completedAt !== null);
+      setReducedMotion(settings.reducedMotion);
     });
     const listener = (message: { type?: string; payload?: PetState }) => {
       if (message.type === 'TABBIT_STATE_UPDATED' && message.payload) setState(message.payload);
@@ -63,8 +76,8 @@ export default function App() {
       </header>
 
       <section className={`habitat mood-${state.mood}`} aria-live="polite">
-        <div className="pet" role="img" aria-label={`标签兔状态：${copy.title}`}>
-          {copy.emoji}
+        <div className="pet">
+          <TabbitSprite state={spriteState[state.mood]} label={`标签兔状态：${copy.title}`} reducedMotion={reducedMotion} />
         </div>
         <div className="speech">
           <strong>{copy.title}</strong>
