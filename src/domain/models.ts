@@ -64,6 +64,35 @@ export interface OnboardingState {
   completedAt: number | null;
 }
 
+export interface RewardLedger {
+  schemaVersion: 1;
+  localDate: string;
+  focusRewards: number;
+  calmRecoveryRewards: number;
+  cleanupRewards: number;
+  processedEventIds: string[];
+}
+
+export interface UnlockState {
+  schemaVersion: 1;
+  equippedDecorationId?: string;
+  unlockedDecorationIds: string[];
+}
+
+export const DEFAULT_REWARD_LEDGER: RewardLedger = {
+  schemaVersion: 1,
+  localDate: '1970-01-01',
+  focusRewards: 0,
+  calmRecoveryRewards: 0,
+  cleanupRewards: 0,
+  processedEventIds: []
+};
+
+export const DEFAULT_UNLOCK_STATE: UnlockState = {
+  schemaVersion: 1,
+  unlockedDecorationIds: []
+};
+
 export const DEFAULT_SETTINGS: UserSettings = {
   schemaVersion: 1,
   softTabLimit: 20,
