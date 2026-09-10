@@ -1,5 +1,7 @@
 # Tabbit 标签兔
 
+[![CI](https://github.com/xichengpro/tabbit/actions/workflows/ci.yml/badge.svg)](https://github.com/xichengpro/tabbit/actions/workflows/ci.yml)
+
 > 一只住在浏览器侧边栏、会感知标签页节奏的小兔子。
 
 Tabbit 把标签页数量、短时打开速度、长期未访问页面和音频标签等**聚合状态**转化为宠物的心情。它用温和、有趣的反馈帮助用户整理浏览空间，而不是用分数批评用户。
