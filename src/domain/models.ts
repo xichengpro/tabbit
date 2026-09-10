@@ -36,6 +36,10 @@ export interface PetState {
   mood: PetMood;
   loadScore: number;
   loadReasons: LoadReason[];
+  moodCandidate?: PetMood | undefined;
+  moodCandidateSamples?: number | undefined;
+  moodCandidateSince?: number | undefined;
+  lastSnapshotAt?: number | undefined;
   level: number;
   xp: number;
   leaves: number;

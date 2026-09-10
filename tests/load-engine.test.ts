@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { calculateLoad, calculateLoadScore, selectMood } from '../src/domain/load-engine';
+import { describe, expect, it, vi } from 'vitest';
+import { calculateLoad, calculateLoadScore, isStaleSnapshot, selectMood, selectMoodWithHysteresis } from '../src/domain/load-engine';
 import { DEFAULT_SETTINGS } from '../src/domain/models';
 import { sanitizePetName, validateAdoption } from '../src/domain/adoption';
 
@@ -37,6 +37,39 @@ describe('load engine', () => {
 
   it('lets explicit focus override load mood', () => {
     expect(selectMood(100, { focusEndsAt: Date.now() + 60_000 })).toBe('focused');
+  });
+
+  it('requires two samples before upgrading mood unless load jumps by 15 points', () => {
+    const first = selectMoodWithHysteresis(56, { mood: 'curious', loadScore: 54 }, 1_000);
+    expect(first).toMatchObject({ mood: 'curious', moodCandidate: 'busy', moodCandidateSamples: 1 });
+
+    const second = selectMoodWithHysteresis(57, { ...first, loadScore: 56 }, 2_000);
+    expect(second.mood).toBe('busy');
+
+    expect(selectMoodWithHysteresis(80, { mood: 'curious', loadScore: 60 }, 3_000).mood).toBe('overwhelmed');
+  });
+
+  it('requires 30 seconds of stability before calming down', () => {
+    const first = selectMoodWithHysteresis(54, { mood: 'busy', loadScore: 56 }, 10_000);
+    expect(first).toMatchObject({ mood: 'busy', moodCandidate: 'curious' });
+    expect(selectMoodWithHysteresis(54, { ...first, loadScore: 54 }, 39_999).mood).toBe('busy');
+    expect(selectMoodWithHysteresis(54, { ...first, loadScore: 54 }, 40_000).mood).toBe('curious');
+  });
+
+  it('rejects an older snapshot when a newer one has already committed', () => {
+    expect(isStaleSnapshot(99, 100)).toBe(true);
+    expect(isStaleSnapshot(100, 100)).toBe(false);
+    expect(isStaleSnapshot(101, 100)).toBe(false);
+  });
+
+  it('supports fake-clock timing for mood stability', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1_000);
+    const first = selectMoodWithHysteresis(20, { mood: 'curious', loadScore: 26 });
+    vi.advanceTimersByTime(30_000);
+    const settled = selectMoodWithHysteresis(20, { ...first, loadScore: 20 });
+    expect(settled.mood).toBe('calm');
+    vi.useRealTimers();
   });
 });
 
