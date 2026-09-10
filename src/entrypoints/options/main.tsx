@@ -2,6 +2,7 @@ import ReactDOM from 'react-dom/client';
 import { useEffect, useState } from 'react';
 import { DEFAULT_SETTINGS, type UserSettings } from '../../domain/models';
 import { getSettings, resetOnboarding, setSettings } from '../../services/storage';
+import { t } from '../../i18n/zh-CN';
 import '../../styles/theme.css';
 
 function Options() {
@@ -23,17 +24,17 @@ function Options() {
 
   return (
     <main className="options shell">
-      <h1>Tabbit 设置</h1>
-      <label>舒适标签页数量<input type="number" min="5" max="100" value={settings.softTabLimit} onChange={(e) => update({ ...settings, softTabLimit: Number(e.target.value) })} /></label>
-      <label>拥挤标签页数量<input type="number" min="10" max="300" value={settings.hardTabLimit} onChange={(e) => update({ ...settings, hardTabLimit: Number(e.target.value) })} /></label>
-      <label className="check"><input type="checkbox" checked={settings.reducedMotion} onChange={(e) => update({ ...settings, reducedMotion: e.target.checked })} />减少动画</label>
-      <button className="primary" onClick={save}>{saved ? '已保存' : '保存设置'}</button>
+      <h1>{t('options.title')}</h1>
+      <label>{t('options.softLimit')}<input type="number" min="5" max="100" value={settings.softTabLimit} onChange={(e) => update({ ...settings, softTabLimit: Number(e.target.value) })} /></label>
+      <label>{t('options.hardLimit')}<input type="number" min="10" max="300" value={settings.hardTabLimit} onChange={(e) => update({ ...settings, hardTabLimit: Number(e.target.value) })} /></label>
+      <label className="check"><input type="checkbox" checked={settings.reducedMotion} onChange={(e) => update({ ...settings, reducedMotion: e.target.checked })} />{t('options.reducedMotion')}</label>
+      <button className="primary" onClick={save}>{saved ? t('options.saved') : t('options.save')}</button>
       <section className="settingsSection">
-        <h2>重新领养</h2>
-        <p className="hint">不会删除名称、成长或设置；下次打开侧边栏时会重新显示领养流程。</p>
-        <button className="secondary" onClick={() => void restartAdoption()}>{onboardingReset ? '已准备好' : '重新打开领养流程'}</button>
+        <h2>{t('options.adoptionTitle')}</h2>
+        <p className="hint">{t('options.adoptionHint')}</p>
+        <button className="secondary" onClick={() => void restartAdoption()}>{onboardingReset ? t('options.adoptionReady') : t('options.adoptionButton')}</button>
       </section>
-      <p className="hint">默认只保存聚合数字，不读取网页正文，也不会把数据上传到服务器。</p>
+      <p className="hint">{t('options.privacyHint')}</p>
     </main>
   );
 }

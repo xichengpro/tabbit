@@ -252,7 +252,7 @@ tabbit/
 │   │   └── organizer/          # P1
 │   ├── services/               # Chrome API、storage、通知适配
 │   ├── components/             # 共享 UI（下一步抽取）
-│   ├── i18n/                   # 文案资源（下一步加入）
+│   ├── i18n/                   # 类型化 zh-CN 文案目录与状态文案选择
 │   └── styles/
 ├── tests/
 ├── wxt.config.ts
@@ -334,4 +334,3 @@ P2。使用 WXT 生成目标包，但 Firefox sidebar 与 MV3 生命周期、权
 - [Declare Permissions](https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions)
 - [Chrome Web Store Program Policies](https://developer.chrome.com/docs/webstore/program-policies/)
 - [WXT Project Structure](https://wxt.dev/guide/essentials/project-structure.html)
-

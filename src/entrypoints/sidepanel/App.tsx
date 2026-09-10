@@ -5,16 +5,7 @@ import { browser } from 'wxt/browser';
 import type { AdoptionInput } from '../../domain/adoption';
 import AdoptionFlow from './AdoptionFlow';
 import TabbitSprite, { type SpriteState } from '../../components/TabbitSprite';
-
-const moodCopy: Record<PetState['mood'], { title: string; line: string }> = {
-  sleeping: { title: '睡着啦', line: '今天的标签页森林很安静。' },
-  calm: { title: '轻轻松松', line: '桌面很清爽，适合专心做一件事。' },
-  curious: { title: '正在探险', line: '我闻到了几个新标签页的味道。' },
-  busy: { title: '有点忙碌', line: '要不要先关掉几个已经看完的页面？' },
-  overwhelmed: { title: '被标签页埋住了', line: '救救我——先整理五个就很棒。' },
-  focused: { title: '专注中', line: '我替你守着门，先完成眼前这件事。' },
-  celebrating: { title: '整理成功', line: '呼！又看见桌面啦。' }
-};
+import { reasonMessageKey, selectMoodCopy, t, type FlavorHistory } from '../../i18n/zh-CN';
 
 const spriteState: Record<PetMood, SpriteState> = {
   sleeping: 'calm',
@@ -26,17 +17,12 @@ const spriteState: Record<PetMood, SpriteState> = {
   celebrating: 'curious'
 };
 
-const reasonCopy: Record<LoadReasonCode, string> = {
-  TAB_COUNT: '标签页数量是当前的主要负载',
-  OPEN_BURST: '刚才连续打开了不少新标签页',
-  STALE_RATIO: '有一部分标签页很久没有访问',
-  AUDIO: '同时有多个标签页正在发声'
-};
-
 export default function App() {
   const [state, setState] = useState<PetState>(DEFAULT_PET_STATE);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [flavorHistory, setFlavorHistory] = useState<FlavorHistory>({});
+  const [flavorLine, setFlavorLine] = useState(() => selectMoodCopy(DEFAULT_PET_STATE.mood, undefined).lineKey);
 
   useEffect(() => {
     void Promise.all([getPetState(), getOnboardingState(), getSettings()]).then(([pet, onboarding, settings]) => {
@@ -52,6 +38,27 @@ export default function App() {
     return () => browser.runtime.onMessage.removeListener(listener);
   }, []);
 
+  const primaryCause: LoadReasonCode | undefined = state.loadReasons[0]?.code;
+  useEffect(() => {
+    let cancelled = false;
+    const now = Date.now();
+    void browser.storage.session.get('tabbitFlavorHistoryV1').then((result) => {
+      const history = (result.tabbitFlavorHistoryV1 as FlavorHistory | undefined) ?? flavorHistory;
+      const selected = selectMoodCopy(state.mood, primaryCause, now, history);
+      if (cancelled) return;
+      setFlavorHistory(selected.history);
+      setFlavorLine(selected.lineKey);
+      void browser.storage.session.set({ tabbitFlavorHistoryV1: selected.history });
+    }).catch(() => {
+      const selected = selectMoodCopy(state.mood, primaryCause, now, flavorHistory);
+      if (!cancelled) {
+        setFlavorHistory(selected.history);
+        setFlavorLine(selected.lineKey);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [state.mood, primaryCause]);
+
   async function finishAdoption(input: AdoptionInput) {
     const pet = await completeAdoption(input);
     setState(pet);
@@ -59,65 +66,65 @@ export default function App() {
     await browser.runtime.sendMessage({ type: 'TABBIT_REFRESH' }).catch(() => undefined);
   }
 
-  if (onboarded === null) return <main className="shell loading">正在准备小窝…</main>;
+  if (onboarded === null) return <main className="shell loading">{t('app.loading')}</main>;
   if (!onboarded) return <AdoptionFlow initialName={state.name} onComplete={finishAdoption} />;
 
-  const copy = moodCopy[state.mood];
+  const title = t(selectMoodCopy(state.mood, primaryCause, Date.now(), flavorHistory).titleKey);
   return (
     <main className="shell">
       <header className="topbar">
         <div>
-          <span className="eyebrow">TABBIT · LEVEL {state.level}</span>
+          <span className="eyebrow">{t('app.level', { level: state.level })}</span>
           <h1>{state.name}</h1>
         </div>
-        <button className="iconButton" title="设置" onClick={() => browser.runtime.openOptionsPage()}>
+        <button className="iconButton" title={t('app.settings')} onClick={() => browser.runtime.openOptionsPage()}>
           ⚙
         </button>
       </header>
 
       <section className={`habitat mood-${state.mood}`} aria-live="polite">
         <div className="pet">
-          <TabbitSprite state={spriteState[state.mood]} label={`标签兔状态：${copy.title}`} reducedMotion={reducedMotion} />
+          <TabbitSprite state={spriteState[state.mood]} label={t('app.spriteLabel', { title })} reducedMotion={reducedMotion} />
         </div>
         <div className="speech">
-          <strong>{copy.title}</strong>
-          <span>{copy.line}</span>
+          <strong>{title}</strong>
+          <span>{t(flavorLine)}</span>
         </div>
       </section>
 
       <section className="card">
         <div className="metricRow">
-          <span>浏览负载</span>
+          <span>{t('app.loadLabel')}</span>
           <strong>{state.loadScore}</strong>
         </div>
-        <div className="meter" aria-label={`浏览负载 ${state.loadScore}%`}>
+        <div className="meter" aria-label={t('app.loadAria', { score: state.loadScore })}>
           <span style={{ width: `${state.loadScore}%` }} />
         </div>
-        <p className="hint">这是浏览节奏提示，不是效率评分。</p>
-        <div className="reasonList" aria-label="浏览负载原因">
+        <p className="hint">{t('app.loadHint')}</p>
+        <div className="reasonList" aria-label={t('app.loadReasonsAria')}>
           {state.loadReasons.length > 0 ? (
             state.loadReasons.map((reason) => (
               <div className="reasonItem" key={reason.code}>
-                <span>{reasonCopy[reason.code]}</span>
-                <strong>+{reason.contribution}</strong>
+                <span>{t(reasonMessageKey(reason.code))}</span>
+                <strong>{t('app.reasonContribution', { contribution: reason.contribution })}</strong>
               </div>
             ))
           ) : (
-            <p className="hint">目前没有明显的负载因素。</p>
+            <p className="hint">{t('app.noLoadFactors')}</p>
           )}
         </div>
       </section>
 
       <section className="actions">
-        <button className="primary" disabled title="将在第 2 个开发任务中启用">
-          开始 25 分钟专注
+        <button className="primary" disabled title={t('app.focusDisabled')}>
+          {t('app.focusButton')}
         </button>
-        <button className="secondary" disabled title="将在获得可选 tabs 权限后启用">
-          整理标签页
+        <button className="secondary" disabled title={t('app.organizeDisabled')}>
+          {t('app.organizeButton')}
         </button>
       </section>
 
-      <footer>🍃 {state.leaves} · XP {state.xp}</footer>
+      <footer>{t('app.footer', { leaves: state.leaves, xp: state.xp })}</footer>
     </main>
   );
 }

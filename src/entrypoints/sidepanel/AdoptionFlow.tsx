@@ -6,6 +6,7 @@ import {
   type AdoptionInput
 } from '../../domain/adoption';
 import TabbitSprite from '../../components/TabbitSprite';
+import { t } from '../../i18n/zh-CN';
 
 interface AdoptionFlowProps {
   initialName: string;
@@ -32,8 +33,8 @@ export default function AdoptionFlow({ initialName, onComplete }: AdoptionFlowPr
   function proceedToRhythm() {
     const trimmed = sanitizePetName(name);
     const message = validateAdoption({ name: trimmed, softTabLimit, hardTabLimit });
-    if (message?.startsWith('名字')) {
-      setError(message);
+    if (message === 'validation.name') {
+      setError(t(message));
       return;
     }
     setName(trimmed);
@@ -45,46 +46,46 @@ export default function AdoptionFlow({ initialName, onComplete }: AdoptionFlowPr
     const input = { name: sanitizePetName(name), softTabLimit, hardTabLimit };
     const message = validateAdoption(input);
     if (message) {
-      setError(message);
+      setError(t(message));
       return;
     }
     setSaving(true);
     try {
       await onComplete(input);
     } catch {
-      setError('暂时没能记住设置，请再试一次。');
+      setError(t('adoption.saveError'));
       setSaving(false);
     }
   }
 
   return (
     <main className="shell adoption" aria-labelledby="adoption-title">
-      <div className="adoptionProgress" aria-label={`领养流程，第 ${step + 1} 步，共 3 步`}>
-        <span>领养流程</span>
+      <div className="adoptionProgress" aria-label={t('adoption.progressAria', { step: step + 1 })}>
+        <span>{t('adoption.progress')}</span>
         <strong>{step + 1} / 3</strong>
       </div>
 
       {step === 0 && (
         <section className="adoptionCard">
-          <div className="adoptionPet"><TabbitSprite state="calm" label="平静的标签兔" /></div>
-          <p className="eyebrow">HELLO, I’M TABBIt</p>
-          <h1 id="adoption-title">有只小家伙想住进你的侧边栏</h1>
-          <p>它会根据标签页的整体节奏作出反应，偶尔提醒你休息或整理。</p>
+          <div className="adoptionPet"><TabbitSprite state="calm" label={t('adoption.spriteCalm')} /></div>
+          <p className="eyebrow">{t('adoption.hello')}</p>
+          <h1 id="adoption-title">{t('adoption.welcomeTitle')}</h1>
+          <p>{t('adoption.welcomeBody')}</p>
           <aside className="privacyNote">
-            <strong>默认只看聚合状态</strong>
-            <span>它不知道你正在浏览什么：不会读取网页正文、标题、网址、表单或历史记录。</span>
+            <strong>{t('adoption.privacyTitle')}</strong>
+            <span>{t('adoption.privacyBody')}</span>
           </aside>
-          <button className="primary" onClick={() => setStep(1)}>认识一下</button>
+          <button className="primary" onClick={() => setStep(1)}>{t('adoption.meet')}</button>
         </section>
       )}
 
       {step === 1 && (
         <section className="adoptionCard">
-          <div className="adoptionPet small"><TabbitSprite state="curious" label="好奇的标签兔" /></div>
-          <p className="eyebrow">STEP 2</p>
-          <h1 id="adoption-title">先给它起个名字</h1>
-          <p>默认叫团团。名字只保存在这台浏览器里。</p>
-          <label className="fieldLabel" htmlFor="pet-name">宠物名字</label>
+          <div className="adoptionPet small"><TabbitSprite state="curious" label={t('adoption.spriteCurious')} /></div>
+          <p className="eyebrow">{t('adoption.stepTwo')}</p>
+          <h1 id="adoption-title">{t('adoption.nameTitle')}</h1>
+          <p>{t('adoption.nameBody')}</p>
+          <label className="fieldLabel" htmlFor="pet-name">{t('adoption.nameLabel')}</label>
           <input
             id="pet-name"
             className="textInput"
@@ -95,22 +96,22 @@ export default function AdoptionFlow({ initialName, onComplete }: AdoptionFlowPr
             onChange={(event) => { setName(event.target.value); setError(null); }}
             onKeyDown={(event) => { if (event.key === 'Enter') proceedToRhythm(); }}
           />
-          <p id="name-help" className="hint">1–12 个可见字符；会自动移除换行和不可见控制字符。</p>
+          <p id="name-help" className="hint">{t('adoption.nameHelp')}</p>
           {error && <p id="adoption-error" className="formError" role="alert">{error}</p>}
           <div className="buttonRow">
-            <button className="secondary" onClick={() => setStep(0)}>上一步</button>
-            <button className="primary" onClick={proceedToRhythm}>继续</button>
+            <button className="secondary" onClick={() => setStep(0)}>{t('adoption.previous')}</button>
+            <button className="primary" onClick={proceedToRhythm}>{t('adoption.next')}</button>
           </div>
         </section>
       )}
 
       {step === 2 && (
         <section className="adoptionCard">
-          <div className="adoptionPet small"><TabbitSprite state="curious" label="好奇的标签兔" /></div>
-          <p className="eyebrow">STEP 3</p>
-          <h1 id="adoption-title">让 {name || '团团'} 适应你的节奏</h1>
-          <p>标签页多不等于效率低。这里只是决定它什么时候该温柔地提醒你。</p>
-          <div className="presetList" aria-label="标签页节奏预设">
+          <div className="adoptionPet small"><TabbitSprite state="curious" label={t('adoption.spriteCurious')} /></div>
+          <p className="eyebrow">{t('adoption.stepThree')}</p>
+          <h1 id="adoption-title">{t('adoption.rhythmTitle', { name: name || t('app.defaultName') })}</h1>
+          <p>{t('adoption.rhythmBody')}</p>
+          <div className="presetList" aria-label={t('adoption.presetsAria')}>
             {ADOPTION_PRESETS.map((preset) => (
               <button
                 key={preset.id}
@@ -118,23 +119,23 @@ export default function AdoptionFlow({ initialName, onComplete }: AdoptionFlowPr
                 aria-pressed={presetId === preset.id}
                 onClick={() => choosePreset(preset.id)}
               >
-                <strong>{preset.label}</strong>
-                <span>{preset.softTabLimit} 舒适 · {preset.hardTabLimit} 拥挤</span>
-                <small>{preset.description}</small>
+                <strong>{t(preset.labelKey)}</strong>
+                <span>{t('adoption.softLabel', { value: preset.softTabLimit })} · {t('adoption.hardLabel', { value: preset.hardTabLimit })}</span>
+                <small>{t(preset.descriptionKey)}</small>
               </button>
             ))}
           </div>
-          <button className="textButton" onClick={() => { setPresetId('custom'); setError(null); }}>自定义数量</button>
+          <button className="textButton" onClick={() => { setPresetId('custom'); setError(null); }}>{t('adoption.custom')}</button>
           {presetId === 'custom' && (
             <div className="customLimits">
-              <label>舒适数量<input type="number" min="5" max="300" value={softTabLimit} onChange={(event) => setSoftTabLimit(Number(event.target.value))} /></label>
-              <label>拥挤数量<input type="number" min="10" max="300" value={hardTabLimit} onChange={(event) => setHardTabLimit(Number(event.target.value))} /></label>
+              <label>{t('adoption.softLimit')}<input type="number" min="5" max="300" value={softTabLimit} onChange={(event) => setSoftTabLimit(Number(event.target.value))} /></label>
+              <label>{t('adoption.hardLimit')}<input type="number" min="10" max="300" value={hardTabLimit} onChange={(event) => setHardTabLimit(Number(event.target.value))} /></label>
             </div>
           )}
           {error && <p id="adoption-error" className="formError" role="alert">{error}</p>}
           <div className="buttonRow">
-            <button className="secondary" disabled={saving} onClick={() => setStep(1)}>上一步</button>
-            <button className="primary" disabled={saving} onClick={() => void finish()}>{saving ? '正在安顿…' : '完成领养'}</button>
+            <button className="secondary" disabled={saving} onClick={() => setStep(1)}>{t('adoption.previous')}</button>
+            <button className="primary" disabled={saving} onClick={() => void finish()}>{saving ? t('adoption.saving') : t('adoption.finish')}</button>
           </div>
         </section>
       )}

@@ -6,31 +6,37 @@ export interface AdoptionInput {
 
 export interface AdoptionPreset {
   id: 'light' | 'daily' | 'heavy';
-  label: string;
-  description: string;
+  labelKey: `adoption.preset.${AdoptionPreset['id']}.label`;
+  descriptionKey: `adoption.preset.${AdoptionPreset['id']}.description`;
   softTabLimit: number;
   hardTabLimit: number;
 }
 
+export type AdoptionValidationKey =
+  | 'validation.name'
+  | 'validation.softLimit'
+  | 'validation.hardLimit'
+  | 'validation.limitOrder';
+
 export const ADOPTION_PRESETS: AdoptionPreset[] = [
-  { id: 'light', label: '轻装', description: '适合习惯随手关标签的人', softTabLimit: 10, hardTabLimit: 30 },
-  { id: 'daily', label: '日常', description: '适合一般工作和学习节奏', softTabLimit: 20, hardTabLimit: 50 },
-  { id: 'heavy', label: '重度', description: '适合研究、开发和资料收集', softTabLimit: 50, hardTabLimit: 120 }
+  { id: 'light', labelKey: 'adoption.preset.light.label', descriptionKey: 'adoption.preset.light.description', softTabLimit: 10, hardTabLimit: 30 },
+  { id: 'daily', labelKey: 'adoption.preset.daily.label', descriptionKey: 'adoption.preset.daily.description', softTabLimit: 20, hardTabLimit: 50 },
+  { id: 'heavy', labelKey: 'adoption.preset.heavy.label', descriptionKey: 'adoption.preset.heavy.description', softTabLimit: 50, hardTabLimit: 120 }
 ];
 
 export function sanitizePetName(value: string): string {
   return value.normalize('NFC').replace(/[\p{C}]/gu, '').trim();
 }
 
-export function validateAdoption(input: AdoptionInput): string | null {
+export function validateAdoption(input: AdoptionInput): AdoptionValidationKey | null {
   const nameLength = Array.from(sanitizePetName(input.name)).length;
-  if (nameLength < 1 || nameLength > 12) return '名字请使用 1–12 个可见字符。';
+  if (nameLength < 1 || nameLength > 12) return 'validation.name';
   if (!Number.isInteger(input.softTabLimit) || input.softTabLimit < 5 || input.softTabLimit > 300) {
-    return '舒适数量需在 5 到 300 之间。';
+    return 'validation.softLimit';
   }
   if (!Number.isInteger(input.hardTabLimit) || input.hardTabLimit < 10 || input.hardTabLimit > 300) {
-    return '拥挤数量需在 10 到 300 之间。';
+    return 'validation.hardLimit';
   }
-  if (input.hardTabLimit <= input.softTabLimit) return '拥挤数量需要大于舒适数量。';
+  if (input.hardTabLimit <= input.softTabLimit) return 'validation.limitOrder';
   return null;
 }

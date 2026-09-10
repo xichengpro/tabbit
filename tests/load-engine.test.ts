@@ -79,8 +79,8 @@ describe('adoption input', () => {
   });
 
   it('requires a short visible name and coherent limits', () => {
-    expect(validateAdoption({ name: '', softTabLimit: 20, hardTabLimit: 50 })).toContain('名字');
-    expect(validateAdoption({ name: '团团', softTabLimit: 50, hardTabLimit: 20 })).toContain('大于');
+    expect(validateAdoption({ name: '', softTabLimit: 20, hardTabLimit: 50 })).toBe('validation.name');
+    expect(validateAdoption({ name: '团团', softTabLimit: 50, hardTabLimit: 20 })).toBe('validation.limitOrder');
     expect(validateAdoption({ name: '团团', softTabLimit: 20, hardTabLimit: 50 })).toBeNull();
   });
 });
