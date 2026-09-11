@@ -23,7 +23,7 @@ npm run build
 Use Conventional Commits, for example:
 
 - `feat(pet): add curious state animation`
-- `fix(background): deduplicate focus completion reward`
+- `fix(organizer): preserve recovery snapshot after a partial close`
 - `docs(privacy): explain optional tabs permission`
 
 ## Product guardrails
@@ -32,4 +32,3 @@ Use Conventional Commits, for example:
 - No tab is closed, moved, muted, or grouped without a user-confirmed action.
 - Base functionality must work without URL, title, history, or page-content access.
 - Privacy claims must describe the shipped code, not future intent.
-

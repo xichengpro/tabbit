@@ -13,7 +13,7 @@ button, input { font: inherit; }
 h1 { margin: 4px 0 16px; font-size: 26px; }
 .iconButton { border: 0; border-radius: 999px; width: 38px; height: 38px; background: rgba(255,255,255,.72); cursor: pointer; }
 .habitat { min-height: 278px; border-radius: 26px; padding: 22px; display: grid; place-items: center; align-content: center; gap: 14px; box-shadow: inset 0 0 0 1px rgba(41,70,52,.08), 0 18px 40px rgba(61,92,67,.1); }
-.mood-calm, .mood-focused { background: linear-gradient(160deg, #dff4d5, #cce7e8); }
+.mood-calm { background: linear-gradient(160deg, #dff4d5, #cce7e8); }
 .mood-curious, .mood-celebrating { background: linear-gradient(160deg, #fff0b9, #ffd8b7); }
 .mood-busy { background: linear-gradient(160deg, #ffe0b9, #fac7a9); }
 .mood-overwhelmed { background: linear-gradient(160deg, #e8d4f2, #d8d0f0); }

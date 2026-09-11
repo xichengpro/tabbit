@@ -99,13 +99,12 @@ Available now:
 
 Planned:
 
-- A 25-minute focus timer and completion celebrations
 - A richer decoration and progression system
 - User-uploaded pet photos or animations, stored locally with validation and a restore-default option
 - Chrome Web Store release, store artwork, and a privacy-policy page
 - Edge and Firefox support
 
-**Start focus** remains a preview. **Organize tabs** is available: grant the optional permission, review the unselected candidates, then select, preview, and confirm before anything closes.
+**Organize tabs** is available: grant the optional permission, review the unselected candidates, then select, preview, and confirm before anything closes.
 
 ## FAQ
 

@@ -18,7 +18,6 @@ const PetMoodSchema = z.enum([
   'curious',
   'busy',
   'overwhelmed',
-  'focused',
   'celebrating'
 ]);
 
@@ -43,7 +42,6 @@ export const PetStateV1Schema = z.object({
   xp: z.number().int().nonnegative(),
   leaves: z.number().int().nonnegative(),
   lastUpdatedAt: z.number().int().nonnegative(),
-  focusEndsAt: z.number().int().nonnegative().optional(),
   celebrationEndsAt: z.number().int().nonnegative().optional()
 });
 
@@ -72,7 +70,6 @@ export const OnboardingStateV1Schema = z.object({
 export const RewardLedgerV1Schema = z.object({
   schemaVersion: z.literal(STORAGE_SCHEMA_VERSION),
   localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  focusRewards: z.number().int().nonnegative(),
   calmRecoveryRewards: z.number().int().nonnegative(),
   cleanupRewards: z.number().int().nonnegative(),
   processedEventIds: z.array(z.string().min(1).max(100)).max(100)
@@ -197,7 +194,6 @@ const SETTINGS_DEFAULTS = {
 const ONBOARDING_DEFAULTS = { completedAt: null };
 const REWARD_DEFAULTS = {
   localDate: '1970-01-01',
-  focusRewards: 0,
   calmRecoveryRewards: 0,
   cleanupRewards: 0,
   processedEventIds: [] as string[]
@@ -205,7 +201,11 @@ const REWARD_DEFAULTS = {
 const UNLOCK_DEFAULTS = { unlockedDecorationIds: [] as string[] };
 
 export function migratePetState(raw: unknown): MigrationResult<PetState> {
-  return migrateLegacy('pet', raw, PetStateV1Schema as z.ZodType<PetState>, PET_DEFAULTS);
+  const normalized = isRecord(raw) && raw.mood === 'focused' ? { ...raw, mood: 'calm' } : raw;
+  const migration = migrateLegacy('pet', normalized, PetStateV1Schema as z.ZodType<PetState>, PET_DEFAULTS);
+  return normalized !== raw && migration.status === 'current'
+    ? { status: 'migrated', value: migration.value }
+    : migration;
 }
 
 export function migrateSettings(raw: unknown): MigrationResult<UserSettings> {

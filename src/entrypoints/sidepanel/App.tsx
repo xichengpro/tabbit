@@ -13,7 +13,6 @@ const spriteState: Record<PetMood, SpriteState> = {
   curious: 'curious',
   busy: 'busy',
   overwhelmed: 'overwhelmed',
-  focused: 'calm',
   celebrating: 'curious'
 };
 
@@ -116,10 +115,7 @@ export default function App() {
       </section>
 
       <section className="actions">
-        <button className="primary" disabled title={t('app.focusDisabled')}>
-          {t('app.focusButton')}
-        </button>
-        <button className="secondary" title={t('app.organizeReady')} onClick={() => void browser.tabs.create({ url: browser.runtime.getURL('/organizer.html') })}>
+        <button className="primary" title={t('app.organizeReady')} onClick={() => void browser.tabs.create({ url: browser.runtime.getURL('/organizer.html') })}>
           {t('app.organizeButton')}
         </button>
       </section>

@@ -78,7 +78,6 @@ export interface MoodHysteresisState {
   moodCandidate?: PetMood | undefined;
   moodCandidateSamples?: number | undefined;
   moodCandidateSince?: number | undefined;
-  focusEndsAt?: number | undefined;
   celebrationEndsAt?: number | undefined;
 }
 
@@ -108,10 +107,6 @@ export function selectMoodWithHysteresis(
   if (state.celebrationEndsAt && state.celebrationEndsAt > now) {
     return { mood: 'celebrating' };
   }
-  if (state.focusEndsAt && state.focusEndsAt > now) {
-    return { mood: 'focused' };
-  }
-
   const target = thresholdMood(score);
   const current = isLoadMood(state.mood) ? state.mood : thresholdMood(state.loadScore);
   if (target === current) return { mood: current };
@@ -138,11 +133,10 @@ export function isStaleSnapshot(capturedAt: number, latestCapturedAt: number): b
 
 export function selectMood(
   score: number,
-  state: Pick<PetState, 'focusEndsAt' | 'celebrationEndsAt'>,
+  state: Pick<PetState, 'celebrationEndsAt'>,
   now = Date.now()
 ): PetMood {
   if (state.celebrationEndsAt && state.celebrationEndsAt > now) return 'celebrating';
-  if (state.focusEndsAt && state.focusEndsAt > now) return 'focused';
   return thresholdMood(score);
 }
 

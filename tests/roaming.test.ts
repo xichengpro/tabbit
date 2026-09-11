@@ -60,7 +60,6 @@ describe('roaming pet movement', () => {
     expect(chooseMoodAction('sleeping')).toBe('nap');
     expect(chooseMoodAction('curious', () => 0.9)).toBe('hop');
     expect(chooseMoodAction('overwhelmed')).toBe('alert');
-    expect(chooseMoodAction('focused')).toBe('idle');
     expect(chooseMoodAction('celebrating')).toBe('hop');
   });
 });

@@ -45,7 +45,6 @@ const spriteState: Record<PetMood, SpriteState> = {
   curious: 'curious',
   busy: 'busy',
   overwhelmed: 'overwhelmed',
-  focused: 'calm',
   celebrating: 'curious'
 };
 
@@ -55,7 +54,6 @@ const moodLineKey: Record<PetMood, MessageKey> = {
   curious: 'roaming.curious',
   busy: 'roaming.busy',
   overwhelmed: 'roaming.overwhelmed',
-  focused: 'roaming.calm',
   celebrating: 'roaming.celebrating'
 };
 

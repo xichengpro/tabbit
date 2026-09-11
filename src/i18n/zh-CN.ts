@@ -11,9 +11,7 @@ export const messageCatalog = {
   'app.noLoadFactors': '目前没有明显的负载因素。',
   'app.loadReasonsAria': '浏览负载原因',
   'app.reasonContribution': '+{contribution}',
-  'app.focusButton': '开始 25 分钟专注',
   'app.organizeButton': '整理标签页',
-  'app.focusDisabled': '专注计时将在后续开发任务中启用',
   'app.organizeReady': '打开整理助手',
   'app.footer': '🍃 {leaves} · XP {xp}',
   'app.spriteLabel': '标签兔状态：{title}',
@@ -22,7 +20,6 @@ export const messageCatalog = {
   'mood.curious.title': '正在探险',
   'mood.busy.title': '有点忙碌',
   'mood.overwhelmed.title': '被标签页埋住了',
-  'mood.focused.title': '专注中',
   'mood.celebrating.title': '整理成功',
   'mood.sleeping.day.0': '今天先到这里也可以。',
   'mood.sleeping.lateNight.0': '今晚先到这里，明天再继续也可以。',
@@ -38,8 +35,6 @@ export const messageCatalog = {
   'mood.overwhelmed.day.0': '救救我——先整理五个就很棒。',
   'mood.overwhelmed.day.1': '我们先找出五个看完的页面，不用一次整理完。',
   'mood.overwhelmed.lateNight.0': '今晚不用硬撑，先让标签森林安静下来。',
-  'mood.focused.day.0': '我替你守着门，先完成眼前这件事。',
-  'mood.focused.lateNight.0': '我替你守着门，时间到了就休息。',
   'mood.celebrating.day.0': '呼！又看见桌面啦。',
   'mood.celebrating.lateNight.0': '呼，今天的整理先收好啦。',
   'mood.curious.openBurst.day.0': '刚才来了好多新页面，我先帮你记着节奏。',
@@ -187,7 +182,6 @@ const moodTitleKeys: Record<PetMood, MessageKey> = {
   curious: 'mood.curious.title',
   busy: 'mood.busy.title',
   overwhelmed: 'mood.overwhelmed.title',
-  focused: 'mood.focused.title',
   celebrating: 'mood.celebrating.title'
 };
 
@@ -197,7 +191,6 @@ const defaultMoodLineKeys: Record<PetMood, Record<TimeOfDay, MessageKey[]>> = {
   curious: { day: ['mood.curious.day.0', 'mood.curious.day.1'], lateNight: ['mood.curious.lateNight.0'] },
   busy: { day: ['mood.busy.day.0', 'mood.busy.day.1'], lateNight: ['mood.busy.lateNight.0'] },
   overwhelmed: { day: ['mood.overwhelmed.day.0', 'mood.overwhelmed.day.1'], lateNight: ['mood.overwhelmed.lateNight.0'] },
-  focused: { day: ['mood.focused.day.0'], lateNight: ['mood.focused.lateNight.0'] },
   celebrating: { day: ['mood.celebrating.day.0'], lateNight: ['mood.celebrating.lateNight.0'] }
 };
 

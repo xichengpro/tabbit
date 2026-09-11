@@ -35,10 +35,6 @@ describe('load engine', () => {
     expect(result).toEqual({ score: 0, reasons: [], ruleVersion: 'load-v1' });
   });
 
-  it('lets explicit focus override load mood', () => {
-    expect(selectMood(100, { focusEndsAt: Date.now() + 60_000 })).toBe('focused');
-  });
-
   it('requires two samples before upgrading mood unless load jumps by 15 points', () => {
     const first = selectMoodWithHysteresis(56, { mood: 'curious', loadScore: 54 }, 1_000);
     expect(first).toMatchObject({ mood: 'curious', moodCandidate: 'busy', moodCandidateSamples: 1 });

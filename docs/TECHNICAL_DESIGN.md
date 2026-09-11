@@ -50,7 +50,6 @@ flowchart TD
 
 - 不在模块全局变量中保存权威业务状态；
 - 每个事件处理器都能从存储恢复必要状态；
-- 倒计时保存 `endsAt`，不依赖长期 `setInterval`；
 - 周期工作使用 `chrome.alarms`；
 - 事件处理器注册在模块顶层/初始化同步路径；
 - 写操作支持重复执行，奖励以事件 ID 或时间桶去重；
@@ -63,7 +62,7 @@ flowchart TD
 | 权限 | 用途 | 不做什么 |
 | --- | --- | --- |
 | `storage` | 保存宠物、设置、奖励和本地会话 | 不同步到自建服务器 |
-| `alarms` | 每分钟校准状态、完成专注 | 不用于频繁后台轮询网络 |
+| `alarms` | 每分钟校准状态 | 不用于频繁后台轮询网络 |
 | `sidePanel` | 提供常驻侧边栏 UI | 不访问网页内容 |
 
 `chrome.tabs` 命名空间本身可在 Service Worker 中使用；读取 URL、标题、favicon 等敏感字段才需要 `tabs` 或 host permission。MVP 只使用数量、活跃时间、声音、固定状态等非正文信息。
@@ -92,7 +91,7 @@ MVP 不声明：`history`、`bookmarks`、`downloads`、`cookies`、`webRequest`
 | `tabs.onCreated` | 记录 10 分钟时间戳并重算 | session 中裁剪过期事件 |
 | `tabs.onRemoved` | 重算、评估整理奖励 | `isWindowClosing` 不计整理奖励 |
 | `tabs.onActivated` | 重算陈旧数量 | 需要防抖 |
-| `alarms.onAlarm` | 每分钟校准；专注完成 | 按 alarm 名路由 |
+| `alarms.onAlarm` | 每分钟校准 | 按 alarm 名路由 |
 | `storage.onChanged` | UI/后台同步设置变化 | 避免写回循环 |
 | `runtime.onMessage` | UI 请求刷新、更新网页宠物偏好、打开设置 | 验证消息类型与 payload |
 
@@ -113,7 +112,6 @@ interface PetStateV1 {
   leaves: number;
   staleTabCount?: number;
   lastUpdatedAt: number;
-  focusEndsAt?: number;
   celebrationEndsAt?: number;
 }
 
@@ -138,7 +136,6 @@ interface UserSettingsV1 {
 interface RewardLedgerV1 {
   schemaVersion: 1;
   localDate: string; // YYYY-MM-DD in local timezone
-  focusRewards: number;
   calmRecoveryRewards: number;
   cleanupRewards: number;
   processedEventIds: string[]; // bounded to latest 100
@@ -218,10 +215,10 @@ interface LoadResult {
 ### 8.2 状态优先级
 
 ```text
-celebrating > focused > sleeping > overwhelmed > busy > curious > calm
+celebrating > sleeping > overwhelmed > busy > curious > calm
 ```
 
-庆祝结束后重新计算，不直接回到旧 mood。专注结束也重新计算。
+庆祝结束后重新计算，不直接回到旧 mood。
 
 ### 8.3 等级曲线
 
@@ -234,13 +231,10 @@ celebrating > focused > sleeping > overwhelmed > busy > curious > calm
 ```ts
 type RequestMessage =
   | { type: 'TABBIT_REFRESH' }
-  | { type: 'FOCUS_START'; minutes: 15 | 25 | 45; requestId: string }
-  | { type: 'FOCUS_CANCEL'; requestId: string }
   | { type: 'DATA_EXPORT'; requestId: string };
 
 type PushMessage =
   | { type: 'TABBIT_STATE_UPDATED'; payload: PetStateV1 }
-  | { type: 'FOCUS_COMPLETED'; eventId: string }
   | { type: 'ERROR'; code: string; recoverable: boolean };
 ```
 

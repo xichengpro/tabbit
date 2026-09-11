@@ -4,7 +4,6 @@ export type PetMood =
   | 'curious'
   | 'busy'
   | 'overwhelmed'
-  | 'focused'
   | 'celebrating';
 
 export interface BrowserSnapshot {
@@ -45,7 +44,6 @@ export interface PetState {
   xp: number;
   leaves: number;
   lastUpdatedAt: number;
-  focusEndsAt?: number;
   celebrationEndsAt?: number;
 }
 
@@ -71,7 +69,6 @@ export interface OnboardingState {
 export interface RewardLedger {
   schemaVersion: 1;
   localDate: string;
-  focusRewards: number;
   calmRecoveryRewards: number;
   cleanupRewards: number;
   processedEventIds: string[];
@@ -100,7 +97,6 @@ export interface OrganizerRecoverySnapshot {
 export const DEFAULT_REWARD_LEDGER: RewardLedger = {
   schemaVersion: 1,
   localDate: '1970-01-01',
-  focusRewards: 0,
   calmRecoveryRewards: 0,
   cleanupRewards: 0,
   processedEventIds: []

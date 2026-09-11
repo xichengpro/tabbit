@@ -7,6 +7,7 @@ import {
   getStorageSchemaVersion,
   sanitizeDiagnostics
 } from '../src/domain/storage-schema';
+import { DEFAULT_PET_STATE } from '../src/domain/models';
 
 describe('storage schemas and migrations', () => {
   it('reports empty values without inventing a persisted record', () => {
@@ -20,6 +21,14 @@ describe('storage schemas and migrations', () => {
     expect(migrateSettings({ schemaVersion: 1, softTabLimit: 20 })).toMatchObject({
       status: 'invalid',
       diagnostic: { key: 'settings', code: 'INVALID', schemaVersion: 1 }
+    });
+  });
+
+  it('safely converts a retired focus mood from older local data', () => {
+    const legacyFocusState = { ...DEFAULT_PET_STATE, mood: 'focused', focusEndsAt: 1_000 };
+    expect(migratePetState(legacyFocusState)).toMatchObject({
+      status: 'migrated',
+      value: { mood: 'calm' }
     });
   });
 
@@ -92,13 +101,13 @@ describe('storage schemas and migrations', () => {
   });
 
   it('migrates a legacy record deterministically and can be retried', () => {
-    const legacy = { schemaVersion: 0, focusRewards: 2, cleanupRewards: 1 };
+    const legacy = { schemaVersion: 0, cleanupRewards: 1 };
     const first = migrateRewardLedger(legacy);
     const second = migrateRewardLedger(legacy);
     expect(first).toEqual(second);
     expect(first).toMatchObject({
       status: 'migrated',
-      value: { schemaVersion: 1, focusRewards: 2, cleanupRewards: 1, calmRecoveryRewards: 0 }
+      value: { schemaVersion: 1, cleanupRewards: 1, calmRecoveryRewards: 0 }
     });
   });
 

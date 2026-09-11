@@ -8,7 +8,7 @@
 
 1. 先验证角色反馈是否有趣；
 2. 再完善状态可靠性；
-3. 再加入专注与成长；
+3. 再加入轻量整理反馈与成长；
 4. 最后才做需要敏感权限的整理助手。
 
 ## 2. 里程碑
@@ -17,7 +17,7 @@
 | --- | --- | --- | --- |
 | M0 蓝图与骨架 | 第 0 周 | 文档、工程骨架、基础负载引擎 | 仓库可安装依赖、产品范围冻结 |
 | M1 有生命的原型 | 第 1–2 周 | 领养、正式角色、实时状态、设置 | 5 人首次体验中 4 人能解释宠物状态 |
-| M2 形成反馈闭环 | 第 3–4 周 | 专注、庆祝、XP、稳定性 | Service Worker 恢复与幂等测试通过 |
+| M2 形成反馈闭环 | 第 3–4 周 | 整理庆祝、XP、稳定性 | Service Worker 恢复与幂等测试通过 |
 | M3 安全整理与 beta | 第 5 周 | 可选权限、整理、恢复、无障碍 | 无误关风险，全部 P0/P1 测试通过 |
 | M4 发布候选 | 第 6 周 | 商店素材、隐私政策、beta 修复 | 10 人 beta 满足发布判断 |
 
@@ -70,17 +70,7 @@
 
 M1 退出条件：基础功能无需 URL/标题权限；5 人中至少 4 人能说出角色为何改变。
 
-### 第 3 周：专注系统
-
-- [ ] 15/25/45 分钟计时；
-- [ ] `endsAt` + alarm 恢复；
-- [ ] 暂停、提前结束和完成状态；
-- [ ] 专注动画与完成反馈；
-- [ ] 通知可选权限/开关（若采用）；
-- [ ] 跨午夜、时钟变化和 Service Worker 重启测试；
-- [ ] 防重复完成事件。
-
-### 第 4 周：成长与奖励
+### 第 3–4 周：成长与整理反馈
 
 - [ ] Reward Ledger 与每日上限；
 - [ ] 整理庆祝检测，排除整窗关闭；
@@ -152,9 +142,8 @@ M2 退出条件：在重复事件、休眠和重启下不重复发奖，成长�
 6. `[M1] Add Zod validation and v1 storage migrations`
 7. `[M1] Replace emoji with four-state sprite prototype`
 8. `[M1] Move copy into zh-CN i18n catalog`
-9. `[M2] Implement restart-safe focus timer`
-10. `[M2] Add idempotent reward ledger`
-11. `[M2] Detect cleanup celebration without window-close farming`
+9. `[M2] Add idempotent reward ledger`
+10. `[M2] Detect cleanup celebration without window-close farming`
 12. `[M3] Design optional tabs permission education screen`
 13. `[M3] Implement organizer candidate protection rules`
 14. `[M3] Add 24-hour close-and-restore snapshot`
@@ -230,7 +219,7 @@ M2 退出条件：在重复事件、休眠和重启下不重复发奖，成长�
 
 - 若有趣但不促成整理：强化互动与收藏，不急着加管理功能；
 - 若整理有用但宠物被忽略：将角色反馈嵌入整理完成页，减少养成复杂度；
-- 若权限成为主要阻碍：移除 URL 类整理，只保留聚合状态与专注；
+- 若权限成为主要阻碍：移除 URL 类整理，只保留聚合状态；
 - 若用户强烈需要跨设备：仅同步设置和装饰，敏感标签数据仍留本地；
 - 若用户要求 AI：先验证具体场景，绝不做通用聊天侧边栏。
 

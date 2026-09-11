@@ -97,7 +97,6 @@ export function chooseMoodAction(mood: PetMood, random: () => number = Math.rand
     case 'curious': return random() < 0.5 ? 'wave' : 'hop';
     case 'busy': return 'hop';
     case 'overwhelmed': return 'alert';
-    case 'focused': return 'idle';
     case 'celebrating': return 'hop';
   }
 }
