@@ -42,6 +42,7 @@ flowchart TD
 - `tabbit.content.tsx`：在普通网页创建 Shadow DOM 宠物图层，处理移动、情绪动作、点击和本地提醒；
 - `roaming.ts`：纯函数计算漫游目标、逃跑位置和心情动作；
 - `options`：设置、隐私和数据管理；
+- `custom-pet.ts`：Codex v1/v2 精灵图尺寸与帧数规则；
 - `organizer`：仅在获得可选权限后读取 URL/标题并生成候选、预览、确认、恢复和按窗口标签组操作。
 
 ## 3. Service Worker 约束
@@ -127,6 +128,7 @@ interface UserSettingsV1 {
   roamingOpacity?: number; // 30–100
   quietHoursStart: number;
   quietHoursEnd: number;
+  customPetEnabled?: boolean;
 }
 ```
 
@@ -170,6 +172,10 @@ interface ClosedTabSnapshotV1 {
 ```
 
 快照保存在本地，24 小时自动删除；不保存表单状态、页面滚动位置或 Cookie。设置页允许立即删除。
+
+### 6.4 自定义宠物素材
+
+`customPetAssetV1` 保存名称、Codex 精灵图版本、Data URL 与导入时间。仅接受 v1 1536×1872 或 v2 1536×2288 的 PNG/WebP，最大 6 MB；不保存宠物库 ID 或临时 URL。渲染时按心情映射到支持的精灵图行，并按该行有效帧数循环。
 
 ## 7. 存储迁移
 

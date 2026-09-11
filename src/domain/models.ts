@@ -59,6 +59,17 @@ export interface UserSettings {
   roamingEnabled?: boolean;
   staleRemindersEnabled?: boolean;
   roamingOpacity?: number;
+  customPetEnabled?: boolean;
+}
+
+export type CodexSpriteVersion = 1 | 2;
+
+export interface CustomPetAsset {
+  schemaVersion: 1;
+  name: string;
+  spriteVersion: CodexSpriteVersion;
+  dataUrl: string;
+  importedAt: number;
 }
 
 export interface OnboardingState {
@@ -118,7 +129,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   quietHoursEnd: 8,
   roamingEnabled: true,
   staleRemindersEnabled: true,
-  roamingOpacity: 100
+  roamingOpacity: 100,
+  customPetEnabled: false
 };
 
 export const DEFAULT_PET_STATE: PetState = {

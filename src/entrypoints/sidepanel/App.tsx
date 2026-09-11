@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DEFAULT_PET_STATE, type LoadReasonCode, type PetState, type PetMood } from '../../domain/models';
-import { completeAdoption, getOnboardingState, getPetState, getSettings } from '../../services/storage';
+import { completeAdoption, getCustomPetAsset, getOnboardingState, getPetState, getSettings } from '../../services/storage';
+import type { CustomPetAsset } from '../../domain/models';
 import { browser } from 'wxt/browser';
 import type { AdoptionInput } from '../../domain/adoption';
 import AdoptionFlow from './AdoptionFlow';
@@ -20,14 +21,16 @@ export default function App() {
   const [state, setState] = useState<PetState>(DEFAULT_PET_STATE);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [customPet, setCustomPet] = useState<CustomPetAsset | undefined>();
   const [flavorHistory, setFlavorHistory] = useState<FlavorHistory>({});
   const [flavorLine, setFlavorLine] = useState(() => selectMoodCopy(DEFAULT_PET_STATE.mood, undefined).lineKey);
 
   useEffect(() => {
-    void Promise.all([getPetState(), getOnboardingState(), getSettings()]).then(([pet, onboarding, settings]) => {
+    void Promise.all([getPetState(), getOnboardingState(), getSettings(), getCustomPetAsset()]).then(([pet, onboarding, settings, asset]) => {
       setState(pet);
       setOnboarded(onboarding.completedAt !== null);
       setReducedMotion(settings.reducedMotion);
+      setCustomPet(settings.customPetEnabled ? asset : undefined);
     });
     const listener = (message: { type?: string; payload?: PetState }) => {
       if (message.type === 'TABBIT_STATE_UPDATED' && message.payload) setState(message.payload);
@@ -83,7 +86,7 @@ export default function App() {
 
       <section className={`habitat mood-${state.mood}`} aria-live="polite">
         <div className="pet">
-          <TabbitSprite state={spriteState[state.mood]} label={t('app.spriteLabel', { title })} reducedMotion={reducedMotion} />
+          <TabbitSprite state={spriteState[state.mood]} label={t('app.spriteLabel', { title })} reducedMotion={reducedMotion} customPet={customPet} />
         </div>
         <div className="speech">
           <strong>{title}</strong>

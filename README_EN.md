@@ -33,6 +33,8 @@ Tabbit's core pet experience does not read:
 
 Pet state and preferences stay in the current browser. There is no registration, application backend, or browsing-data upload.
 
+Custom pet artwork also stays in the current browser. Tabbit accepts Codex v1 (1536×1872) and v2 (1536×2288) eight-column sprite sheets, checks image type, dimensions, and size before import, and never persists a Codex pet ID or temporary download URL.
+
 To display the rabbit on a page, Tabbit's content script creates an isolated Shadow DOM layer on regular `http://` and `https://` pages. To avoid covering text, it only checks rendered character rectangles at candidate landing spots; it does not read, store, or upload the characters themselves. It also does not read titles, URLs, forms, or input, and cannot run on browser-internal pages such as `chrome://`. You can disable the roaming pet from its right-click menu or the options page.
 
 The extension requests only three permissions by default:
@@ -92,6 +94,7 @@ Available now:
 - Live browser-load score with contributing reasons
 - Safe tab organizer: manual candidate selection, preview plus second confirmation, and a 24-hour restore window
 - Website grouping: group multiple unprotected tabs by domain and window using native browser tab groups
+- Custom pets: locally import Codex v1/v2 PNG/WebP sprite sheets and restore the default rabbit at any time
 - Four-state SVG animation with reduced-motion support
 - Local preferences, versioned storage, migrations, and corrupt/future-data protection
 - Typed Simplified Chinese mood copy, late-night variants, and six-hour repetition avoidance

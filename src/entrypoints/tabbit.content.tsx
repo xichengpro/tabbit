@@ -25,6 +25,7 @@ import {
 import {
   DEFAULT_PET_STATE,
   DEFAULT_SETTINGS,
+  type CustomPetAsset,
   type PetMood,
   type PetState,
   type UserSettings
@@ -36,6 +37,7 @@ import '../styles/roaming.css';
 const PET_KEY = 'petStateV1';
 const SETTINGS_KEY = 'settingsV1';
 const ONBOARDING_KEY = 'onboardingV1';
+const CUSTOM_PET_KEY = 'customPetAssetV1';
 const REMINDER_KEY = 'staleReminderShownAtV1';
 const REMINDER_COOLDOWN_MS = 30 * 60 * 1000;
 
@@ -61,6 +63,7 @@ interface OverlayState {
   pet: PetState;
   settings: UserSettings;
   onboarded: boolean;
+  customPet?: CustomPetAsset;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -75,6 +78,7 @@ function parseOverlayState(values: Record<string, unknown>): OverlayState {
   const rawPet = values[PET_KEY];
   const rawSettings = values[SETTINGS_KEY];
   const rawOnboarding = values[ONBOARDING_KEY];
+  const rawCustomPet = values[CUSTOM_PET_KEY];
   const pet = isRecord(rawPet) && rawPet.schemaVersion === 1
     ? {
         ...DEFAULT_PET_STATE,
@@ -98,6 +102,7 @@ function parseOverlayState(values: Record<string, unknown>): OverlayState {
           rawSettings.roamingOpacity >= 30 && rawSettings.roamingOpacity <= 100
           ? { roamingOpacity: rawSettings.roamingOpacity }
           : {})
+        ,...(typeof rawSettings.customPetEnabled === 'boolean' ? { customPetEnabled: rawSettings.customPetEnabled } : {})
       }
     : rawSettings === undefined
       ? DEFAULT_SETTINGS
@@ -105,11 +110,18 @@ function parseOverlayState(values: Record<string, unknown>): OverlayState {
   const onboarded = isRecord(rawOnboarding) &&
     rawOnboarding.schemaVersion === 1 &&
     typeof rawOnboarding.completedAt === 'number';
-  return { pet, settings, onboarded };
+  const customPet = isRecord(rawCustomPet) && rawCustomPet.schemaVersion === 1 &&
+    typeof rawCustomPet.name === 'string' && rawCustomPet.name.length > 0 &&
+    (rawCustomPet.spriteVersion === 1 || rawCustomPet.spriteVersion === 2) &&
+    typeof rawCustomPet.dataUrl === 'string' && /^data:image\/(png|webp);base64,/.test(rawCustomPet.dataUrl) &&
+    typeof rawCustomPet.importedAt === 'number'
+    ? rawCustomPet as unknown as CustomPetAsset
+    : undefined;
+  return { pet, settings, onboarded, ...(settings.customPetEnabled && customPet ? { customPet } : {}) };
 }
 
 async function readOverlayState(): Promise<OverlayState> {
-  const values = await browser.storage.local.get([PET_KEY, SETTINGS_KEY, ONBOARDING_KEY]);
+  const values = await browser.storage.local.get([PET_KEY, SETTINGS_KEY, ONBOARDING_KEY, CUSTOM_PET_KEY]);
   return parseOverlayState(values);
 }
 
@@ -207,7 +219,7 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
   }, [position]);
 
   useEffect(() => {
-    const relevantKeys = new Set([PET_KEY, SETTINGS_KEY, ONBOARDING_KEY]);
+    const relevantKeys = new Set([PET_KEY, SETTINGS_KEY, ONBOARDING_KEY, CUSTOM_PET_KEY]);
     const listener: Parameters<typeof browser.storage.onChanged.addListener>[0] = (changes, areaName) => {
       if (areaName !== 'local' || !Object.keys(changes).some((key) => relevantKeys.has(key))) return;
       void readOverlayState().then(setSnapshot);
@@ -373,6 +385,7 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
               state={spriteState[snapshot.pet.mood]}
               label={t('roaming.petAria', { name: snapshot.pet.name })}
               reducedMotion={reducedMotion}
+              customPet={snapshot.customPet}
             />
           </div>
           {action === 'nap' && <span className="roamingZzz" aria-hidden="true">Zzz</span>}

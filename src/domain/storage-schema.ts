@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type {
   LoadReason,
+  CustomPetAsset,
   OnboardingState,
   OrganizerRecoverySnapshot,
   PetMood,
@@ -56,7 +57,8 @@ export const UserSettingsV1Schema = z.object({
   quietHoursEnd: z.number().int().min(0).max(23),
   roamingEnabled: z.boolean().optional(),
   staleRemindersEnabled: z.boolean().optional(),
-  roamingOpacity: z.number().int().min(30).max(100).optional()
+  roamingOpacity: z.number().int().min(30).max(100).optional(),
+  customPetEnabled: z.boolean().optional()
 }).refine((settings) => settings.hardTabLimit > settings.softTabLimit, {
   message: 'hardTabLimit must be greater than softTabLimit',
   path: ['hardTabLimit']
@@ -96,8 +98,16 @@ export const OrganizerRecoverySnapshotV1Schema = z.object({
   path: ['expiresAt']
 });
 
-export type StorageRecord = PetState | UserSettings | OnboardingState | RewardLedger | UnlockState | OrganizerRecoverySnapshot;
-export type StorageKind = 'pet' | 'settings' | 'onboarding' | 'rewardLedger' | 'unlock' | 'organizerRecovery';
+export const CustomPetAssetV1Schema = z.object({
+  schemaVersion: z.literal(STORAGE_SCHEMA_VERSION),
+  name: z.string().min(1).max(40),
+  spriteVersion: z.union([z.literal(1), z.literal(2)]),
+  dataUrl: z.string().regex(/^data:image\/(png|webp);base64,/).max(9_000_000),
+  importedAt: z.number().int().nonnegative()
+});
+
+export type StorageRecord = PetState | UserSettings | OnboardingState | RewardLedger | UnlockState | OrganizerRecoverySnapshot | CustomPetAsset;
+export type StorageKind = 'pet' | 'settings' | 'onboarding' | 'rewardLedger' | 'unlock' | 'organizerRecovery' | 'customPet';
 
 export type StorageDiagnosticCode = 'MISSING' | 'INVALID' | 'FUTURE_VERSION' | 'MIGRATION_REQUIRED';
 
@@ -231,6 +241,10 @@ export function migrateOrganizerRecovery(raw: unknown): MigrationResult<Organize
     OrganizerRecoverySnapshotV1Schema as z.ZodType<OrganizerRecoverySnapshot>,
     {}
   );
+}
+
+export function migrateCustomPetAsset(raw: unknown): MigrationResult<CustomPetAsset> {
+  return migrateLegacy('customPet', raw, CustomPetAssetV1Schema as z.ZodType<CustomPetAsset>, {});
 }
 
 export function sanitizeDiagnostics(items: StorageDiagnostic[], generatedAt = Date.now()): SanitizedDiagnostics {

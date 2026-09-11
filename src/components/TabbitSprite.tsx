@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { frameCountForRow } from '../domain/custom-pet';
+import type { CustomPetAsset } from '../domain/models';
 
 export type SpriteState = 'calm' | 'curious' | 'busy' | 'overwhelmed';
 
@@ -6,19 +8,26 @@ interface TabbitSpriteProps {
   state: SpriteState;
   label: string;
   reducedMotion?: boolean;
+  customPet?: CustomPetAsset | undefined;
 }
 
-export default function TabbitSprite({ state, label, reducedMotion = false }: TabbitSpriteProps) {
+function customPetRow(state: SpriteState): number {
+  return { calm: 0, curious: 1, busy: 2, overwhelmed: 3 }[state];
+}
+
+export default function TabbitSprite({ state, label, reducedMotion = false, customPet }: TabbitSpriteProps) {
   const spriteRef = useRef<SVGSVGElement>(null);
+  const customPetRef = useRef<HTMLDivElement>(null);
   const [pageVisible, setPageVisible] = useState(true);
   const [inViewport, setInViewport] = useState(true);
+  const [frame, setFrame] = useState(0);
 
   useEffect(() => {
     const onVisibilityChange = () => setPageVisible(document.visibilityState === 'visible');
     document.addEventListener('visibilitychange', onVisibilityChange);
     onVisibilityChange();
 
-    const node = spriteRef.current;
+    const node = customPet ? customPetRef.current : spriteRef.current;
     if (!node || typeof IntersectionObserver === 'undefined') {
       return () => document.removeEventListener('visibilitychange', onVisibilityChange);
     }
@@ -28,9 +37,35 @@ export default function TabbitSprite({ state, label, reducedMotion = false }: Ta
       document.removeEventListener('visibilitychange', onVisibilityChange);
       observer.disconnect();
     };
-  }, []);
+  }, [customPet]);
 
   const paused = reducedMotion || !pageVisible || !inViewport;
+  const row = customPetRow(state);
+  const frameCount = frameCountForRow(row);
+  useEffect(() => {
+    setFrame(0);
+    if (!customPet || paused) return;
+    const timer = setInterval(() => setFrame((current) => (current + 1) % frameCount), 150);
+    return () => clearInterval(timer);
+  }, [customPet, frameCount, paused, row]);
+
+  if (customPet) {
+    const framePosition = frameCount > 1 ? (frame / (frameCount - 1)) * 100 : 0;
+    const rowPosition = customPet.spriteVersion === 1 ? (row / 8) * 100 : (row / 10) * 100;
+    return (
+      <div
+        ref={customPetRef}
+        className={`customPetSprite${paused ? ' customPetSprite--paused' : ''}`}
+        role="img"
+        aria-label={label}
+        style={{
+          backgroundImage: `url("${customPet.dataUrl}")`,
+          backgroundSize: `800% ${customPet.spriteVersion === 1 ? 900 : 1100}%`,
+          backgroundPosition: `${framePosition}% ${rowPosition}%`
+        }}
+      />
+    );
+  }
   return (
     <svg
       ref={spriteRef}

@@ -5,6 +5,7 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_UNLOCK_STATE,
   type OnboardingState,
+  type CustomPetAsset,
   type OrganizerRecoverySnapshot,
   type PetState,
   type RewardLedger,
@@ -15,12 +16,14 @@ import { sanitizePetName, validateAdoption, type AdoptionInput } from '../domain
 import {
   getStorageSchemaVersion,
   migrateOnboardingState,
+  migrateCustomPetAsset,
   migrateOrganizerRecovery,
   migratePetState,
   migrateRewardLedger,
   migrateSettings,
   migrateUnlockState,
   OnboardingStateV1Schema,
+  CustomPetAssetV1Schema,
   OrganizerRecoverySnapshotV1Schema,
   PetStateV1Schema,
   RewardLedgerV1Schema,
@@ -42,6 +45,7 @@ const KEYS = {
   rewardLedger: 'rewardLedgerV1',
   unlock: 'unlockStateV1',
   organizerRecovery: 'organizerRecoveryV1',
+  customPet: 'customPetAssetV1',
   recentOpens: 'recentTabOpensV1'
 } as const;
 
@@ -127,6 +131,30 @@ export async function setSettings(settings: UserSettings): Promise<boolean> {
   return writeCurrent('settings', UserSettingsV1Schema.parse(settings));
 }
 
+export async function getCustomPetAsset(): Promise<CustomPetAsset | undefined> {
+  const result = await browser.storage.local.get(KEYS.customPet);
+  const migration = migrateCustomPetAsset(result[KEYS.customPet]);
+  rememberDiagnostic('customPet', migration as MigrationResult<unknown>);
+  if (migration.status === 'current') return migration.value;
+  if (migration.status === 'migrated') {
+    await backupBeforeMigration('customPet', result[KEYS.customPet]);
+    await browser.storage.local.set({ [KEYS.customPet]: migration.value });
+    return migration.value;
+  }
+  return undefined;
+}
+
+export async function setCustomPetAsset(asset: CustomPetAsset): Promise<boolean> {
+  return writeCurrent('customPet', CustomPetAssetV1Schema.parse(asset));
+}
+
+export async function clearCustomPetAsset(): Promise<boolean> {
+  if (!(await canWrite(['customPet']))) return false;
+  await browser.storage.local.remove(KEYS.customPet);
+  diagnostics.delete('customPet');
+  return true;
+}
+
 export async function getOnboardingState(): Promise<OnboardingState> {
   return readMigrated('onboarding', DEFAULT_ONBOARDING_STATE, migrateOnboardingState);
 }
@@ -177,9 +205,10 @@ export async function exportStorageDiagnostics(): Promise<SanitizedDiagnostics> 
     migrateOnboardingState(all[KEYS.onboarding]),
     migrateRewardLedger(all[KEYS.rewardLedger]),
     migrateUnlockState(all[KEYS.unlock]),
-    migrateOrganizerRecovery(all[KEYS.organizerRecovery])
+    migrateOrganizerRecovery(all[KEYS.organizerRecovery]),
+    migrateCustomPetAsset(all[KEYS.customPet])
   ];
-  const keys: StorageKind[] = ['pet', 'settings', 'onboarding', 'rewardLedger', 'unlock', 'organizerRecovery'];
+  const keys: StorageKind[] = ['pet', 'settings', 'onboarding', 'rewardLedger', 'unlock', 'organizerRecovery', 'customPet'];
   migrations.forEach((migration, index) => rememberDiagnostic(keys[index]!, migration as MigrationResult<unknown>));
   return sanitizeDiagnostics([...diagnostics.values()]);
 }
