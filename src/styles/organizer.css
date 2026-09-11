@@ -10,6 +10,7 @@
 .organizerSummary p { margin: 0; }
 .recoveryCard { margin-bottom: 14px; padding: 12px 14px; border-radius: 16px; color: #365142; background: #e6f2e1; font-size: 13px; font-weight: 650; }
 .domainList { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.domainItem { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; width: 100%; padding: 8px 10px; border: 1px solid #d8e6d5; border-radius: 13px; background: #f8fbf5; }
 .domainList span, .reasonChips em { border-radius: 999px; font-style: normal; }
 .domainList span { padding: 6px 9px; color: #42604a; background: #edf5e9; font-size: 12px; }
 .selectionActions { display: flex; gap: 14px; margin: 8px 0 12px; }

@@ -19,6 +19,7 @@ export interface OrganizerCandidate extends OrganizerTabInput {
 export interface OrganizerDomainGroup {
   domain: string;
   count: number;
+  groupableTabs: Array<{ id: number; windowId: number }>;
 }
 
 export interface OrganizerAnalysis {
@@ -95,9 +96,16 @@ export function analyzeTabsForOrganization(
   }
 
   const byDomain = new Map<string, number>();
+  const groupableByDomain = new Map<string, Array<{ id: number; windowId: number }>>();
   eligible.forEach((tab) => {
     const domain = domainForUrl(tab.url);
-    if (domain) byDomain.set(domain, (byDomain.get(domain) ?? 0) + 1);
+    if (!domain) return;
+    byDomain.set(domain, (byDomain.get(domain) ?? 0) + 1);
+    if (!protectedIds.has(tab.id)) {
+      const groupable = groupableByDomain.get(domain) ?? [];
+      groupable.push({ id: tab.id, windowId: tab.windowId });
+      groupableByDomain.set(domain, groupable);
+    }
   });
   const byId = new Map(eligible.map((tab) => [tab.id, tab]));
   const candidates = [...candidateReasons.entries()]
@@ -105,7 +113,7 @@ export function analyzeTabsForOrganization(
     .sort((left, right) => right.reasons.length - left.reasons.length || (left.lastAccessed ?? 0) - (right.lastAccessed ?? 0));
   const domains = [...byDomain.entries()]
     .filter(([, count]) => count > 1)
-    .map(([domain, count]) => ({ domain, count }))
+    .map(([domain, count]) => ({ domain, count, groupableTabs: groupableByDomain.get(domain) ?? [] }))
     .sort((left, right) => right.count - left.count || left.domain.localeCompare(right.domain))
     .slice(0, 6);
 

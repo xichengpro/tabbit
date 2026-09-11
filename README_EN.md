@@ -43,7 +43,7 @@ The extension requests only three permissions by default:
 | `storage` | Save the pet name, preferences, and state locally |
 | `alarms` | Perform a low-frequency state correction once per minute |
 
-Only after you choose to organize tabs and approve the prompt does Tabbit request the optional `tabs` permission. It uses titles, URLs, activity time, and pinned/audible state locally to produce manually selectable candidates; nothing is uploaded. After closing selected tabs, only their URLs, original window, and order are held locally for up to 24 hours so you can restore them; the snapshot then expires automatically.
+Only after you choose to organize tabs and approve the prompt does Tabbit request the optional `tabs` permission. It uses titles, URLs, activity time, and pinned/audible state locally to produce manually selectable candidates; nothing is uploaded. Website grouping requires a separate `tabGroups` approval and creates native browser groups only after you click a domain action. After closing selected tabs, only their URLs, original window, and order are held locally for up to 24 hours so you can restore them; the snapshot then expires automatically.
 
 Those are the three default Manifest API permissions; `tabs` is requested only as an optional permission. The roaming content script is separately restricted to `http://*/*` and `https://*/*`, with no additional `host_permissions`. Every build audits default permissions, optional permissions, and content-script scope; an unreviewed change fails CI.
 
@@ -91,6 +91,7 @@ Available now:
 - Long-idle tab reminders with a 30-minute cooldown
 - Live browser-load score with contributing reasons
 - Safe tab organizer: manual candidate selection, preview plus second confirmation, and a 24-hour restore window
+- Website grouping: group multiple unprotected tabs by domain and window using native browser tab groups
 - Four-state SVG animation with reduced-motion support
 - Local preferences, versioned storage, migrations, and corrupt/future-data protection
 - Typed Simplified Chinese mood copy, late-night variants, and six-hour repetition avoidance

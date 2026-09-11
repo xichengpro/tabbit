@@ -3,7 +3,7 @@ import { appendFileSync, readFileSync } from 'node:fs';
 const manifestPath = process.argv[2] ?? '.output/chrome-mv3/manifest.json';
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const expectedPermissions = ['alarms', 'sidePanel', 'storage'].sort();
-const expectedOptionalPermissions = ['tabs'];
+const expectedOptionalPermissions = ['tabGroups', 'tabs'].sort();
 const expectedHostPermissions = [];
 const expectedContentMatches = ['http://*/*', 'https://*/*'].sort();
 const actualPermissions = [...(manifest.permissions ?? [])].sort();

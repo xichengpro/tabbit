@@ -9,7 +9,7 @@ export default defineConfig({
     description: '一只会感知标签页状态、在网页上散步的小兔子。',
     minimum_chrome_version: '114',
     permissions: ['storage', 'alarms', 'sidePanel'],
-    optional_permissions: ['tabs'],
+    optional_permissions: ['tabs', 'tabGroups'],
     action: { default_title: '打开 Tabbit' },
     side_panel: { default_path: 'sidepanel.html' },
     options_page: 'options.html'

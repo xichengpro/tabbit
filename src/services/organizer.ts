@@ -1,4 +1,4 @@
-import { analyzeTabsForOrganization, type OrganizerAnalysis, type OrganizerCandidate, type OrganizerTabInput } from '../domain/organizer';
+import { analyzeTabsForOrganization, type OrganizerAnalysis, type OrganizerCandidate, type OrganizerDomainGroup, type OrganizerTabInput } from '../domain/organizer';
 import type { OrganizerRecoverySnapshot } from '../domain/models';
 import {
   clearOrganizerRecoverySnapshot,
@@ -44,10 +44,51 @@ export async function requestOrganizerPermission(): Promise<boolean> {
   return browser.permissions.request({ permissions: ['tabs'] });
 }
 
+export async function hasOrganizerGroupingPermission(): Promise<boolean> {
+  return browser.permissions.contains({ permissions: ['tabGroups'] });
+}
+
+export async function requestOrganizerGroupingPermission(): Promise<boolean> {
+  return browser.permissions.request({ permissions: ['tabGroups'] });
+}
+
 export async function analyzeOpenTabs(now = Date.now()): Promise<OrganizerAnalysis> {
   const [tabs, settings] = await Promise.all([browser.tabs.query({}), getSettings()]);
   const organizerTabs = tabs.map(toOrganizerTab).filter((tab): tab is OrganizerTabInput => tab !== null);
   return analyzeTabsForOrganization(organizerTabs, settings.staleAfterHours, now);
+}
+
+export interface GroupOrganizerResult {
+  groupedTabs: number;
+  groupedGroups: number;
+  failedGroups: number;
+}
+
+/** Group only the explicitly requested, non-protected domain entries. */
+export async function groupOrganizerDomains(domains: OrganizerDomainGroup[]): Promise<GroupOrganizerResult> {
+  let groupedTabs = 0;
+  let groupedGroups = 0;
+  let failedGroups = 0;
+  for (const domain of domains) {
+    const byWindow = new Map<number, number[]>();
+    for (const tab of domain.groupableTabs) {
+      const ids = byWindow.get(tab.windowId) ?? [];
+      ids.push(tab.id);
+      byWindow.set(tab.windowId, ids);
+    }
+    for (const tabIds of byWindow.values()) {
+      if (tabIds.length < 2) continue;
+      try {
+        const groupId = await browser.tabs.group({ tabIds: tabIds as [number, ...number[]] }) as number;
+        await browser.tabGroups.update(groupId, { title: domain.domain });
+        groupedTabs += tabIds.length;
+        groupedGroups += 1;
+      } catch {
+        failedGroups += 1;
+      }
+    }
+  }
+  return { groupedTabs, groupedGroups, failedGroups };
 }
 
 export interface CloseOrganizerResult {

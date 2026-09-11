@@ -19,7 +19,11 @@ describe('tab organizer analysis', () => {
       expect.objectContaining({ id: 3, reasons: ['STALE'] }),
       expect.objectContaining({ id: 2, reasons: ['DUPLICATE'] })
     ]);
-    expect(analysis.domains).toContainEqual({ domain: 'example.com', count: 2 });
+    expect(analysis.domains).toContainEqual(expect.objectContaining({
+      domain: 'example.com',
+      count: 2,
+      groupableTabs: [{ id: 2, windowId: 1 }]
+    }));
   });
 
   it('normalizes fragments but does not treat browser pages as closable URLs', () => {

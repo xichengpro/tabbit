@@ -5,8 +5,11 @@ import { t } from '../../i18n/zh-CN';
 import {
   analyzeOpenTabs,
   closeOrganizerCandidates,
+  groupOrganizerDomains,
   hasOrganizerPermission,
+  hasOrganizerGroupingPermission,
   requestOrganizerPermission,
+  requestOrganizerGroupingPermission,
   restoreLastOrganizerBatch
 } from '../../services/organizer';
 import { getOrganizerRecoverySnapshot } from '../../services/storage';
@@ -22,6 +25,7 @@ function candidateTitle(candidate: OrganizerCandidate): string {
 
 export default function OrganizerApp() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [hasGroupingPermission, setHasGroupingPermission] = useState<boolean | null>(null);
   const [analysis, setAnalysis] = useState<OrganizerAnalysis | null>(null);
   const [selected, setSelected] = useState<Set<number>>(() => new Set());
   const [recovery, setRecovery] = useState<OrganizerRecoverySnapshot | undefined>();
@@ -35,12 +39,16 @@ export default function OrganizerApp() {
   );
 
   useEffect(() => {
-    void Promise.all([hasOrganizerPermission(), getOrganizerRecoverySnapshot()])
-      .then(([permission, snapshot]) => {
+    void Promise.all([hasOrganizerPermission(), hasOrganizerGroupingPermission(), getOrganizerRecoverySnapshot()])
+      .then(([permission, groupingPermission, snapshot]) => {
         setHasPermission(permission);
+        setHasGroupingPermission(groupingPermission);
         setRecovery(snapshot);
       })
-      .catch(() => setHasPermission(false));
+      .catch(() => {
+        setHasPermission(false);
+        setHasGroupingPermission(false);
+      });
   }, []);
 
   async function refreshAnalysis() {
@@ -117,6 +125,31 @@ export default function OrganizerApp() {
     }
   }
 
+  async function groupDomain(domain: OrganizerAnalysis['domains'][number]) {
+    setBusy(true);
+    setNotice(null);
+    try {
+      let granted = hasGroupingPermission;
+      if (!granted) {
+        granted = await requestOrganizerGroupingPermission();
+        setHasGroupingPermission(granted);
+      }
+      if (!granted) {
+        setNotice(t('organizer.groupPermissionDenied'));
+        return;
+      }
+      const result = await groupOrganizerDomains([domain]);
+      if (result.groupedGroups === 0) setNotice(t('organizer.groupEmpty'));
+      else if (result.failedGroups > 0) setNotice(t('organizer.groupPartial', { grouped: result.groupedTabs, failed: result.failedGroups }));
+      else setNotice(t('organizer.groupResult', { grouped: result.groupedTabs }));
+      await refreshAnalysis();
+    } catch {
+      setNotice(t('organizer.operationError'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <main className="organizer shell">
       <header className="organizerHeader">
@@ -163,7 +196,14 @@ export default function OrganizerApp() {
                 <section className="card">
                   <h2>{t('organizer.domainSummary')}</h2>
                   <div className="domainList">
-                    {analysis.domains.map((domain) => <span key={domain.domain}>{domain.domain} · {t('organizer.domainCount', { count: domain.count })}</span>)}
+                    {analysis.domains.map((domain) => (
+                      <div className="domainItem" key={domain.domain}>
+                        <span>{domain.domain} · {t('organizer.domainCount', { count: domain.count })}</span>
+                        <button className="textButton" disabled={busy || domain.groupableTabs.length < 2} onClick={() => void groupDomain(domain)}>
+                          {domain.groupableTabs.length < 2 ? t('organizer.groupProtected') : t('organizer.groupDomain', { count: domain.groupableTabs.length })}
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </section>
               )}
