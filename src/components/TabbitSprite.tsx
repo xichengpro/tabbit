@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { frameCountForRow } from '../domain/custom-pet';
+import { CODEX_ANIMATIONS, coordinatesForAnimation, type CodexAnimation } from '../domain/custom-pet';
 import type { CustomPetAsset } from '../domain/models';
 
 export type SpriteState = 'calm' | 'curious' | 'busy' | 'overwhelmed';
@@ -9,13 +9,19 @@ interface TabbitSpriteProps {
   label: string;
   reducedMotion?: boolean;
   customPet?: CustomPetAsset | undefined;
+  animation?: CodexAnimation | undefined;
 }
 
-function customPetRow(state: SpriteState): number {
-  return { calm: 0, curious: 1, busy: 2, overwhelmed: 3 }[state];
+function fallbackAnimation(state: SpriteState): CodexAnimation {
+  return {
+    calm: 'idle',
+    curious: 'waiting',
+    busy: 'running',
+    overwhelmed: 'failed'
+  }[state] as CodexAnimation;
 }
 
-export default function TabbitSprite({ state, label, reducedMotion = false, customPet }: TabbitSpriteProps) {
+export default function TabbitSprite({ state, label, reducedMotion = false, customPet, animation }: TabbitSpriteProps) {
   const spriteRef = useRef<SVGSVGElement>(null);
   const customPetRef = useRef<HTMLDivElement>(null);
   const [pageVisible, setPageVisible] = useState(true);
@@ -40,28 +46,30 @@ export default function TabbitSprite({ state, label, reducedMotion = false, cust
   }, [customPet]);
 
   const paused = reducedMotion || !pageVisible || !inViewport;
-  const row = customPetRow(state);
-  const frameCount = frameCountForRow(row);
+  const selectedAnimation = animation ?? fallbackAnimation(state);
+  const { row, frameCount, frameDurationMs } = CODEX_ANIMATIONS[selectedAnimation];
   useEffect(() => {
     setFrame(0);
     if (!customPet || paused) return;
-    const timer = setInterval(() => setFrame((current) => (current + 1) % frameCount), 150);
+    const timer = setInterval(() => setFrame((current) => (current + 1) % frameCount), frameDurationMs);
     return () => clearInterval(timer);
-  }, [customPet, frameCount, paused, row]);
+  }, [customPet, frameCount, frameDurationMs, paused, selectedAnimation]);
 
   if (customPet) {
-    const framePosition = frameCount > 1 ? (frame / (frameCount - 1)) * 100 : 0;
-    const rowPosition = customPet.spriteVersion === 1 ? (row / 8) * 100 : (row / 10) * 100;
+    const coordinates = coordinatesForAnimation(selectedAnimation, frame, customPet.spriteVersion);
     return (
       <div
         ref={customPetRef}
         className={`customPetSprite${paused ? ' customPetSprite--paused' : ''}`}
+        data-animation={selectedAnimation}
+        data-frame={coordinates.frame}
+        data-row={row}
         role="img"
         aria-label={label}
         style={{
           backgroundImage: `url("${customPet.dataUrl}")`,
           backgroundSize: `800% ${customPet.spriteVersion === 1 ? 900 : 1100}%`,
-          backgroundPosition: `${framePosition}% ${rowPosition}%`
+          backgroundPosition: `${coordinates.framePositionPercent}% ${coordinates.rowPositionPercent}%`
         }}
       />
     );

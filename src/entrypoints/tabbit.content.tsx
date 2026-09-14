@@ -11,13 +11,16 @@ import { createRoot, type Root } from 'react-dom/client';
 import { createShadowRootUi } from 'wxt/utils/content-script-ui/shadow-root';
 import { browser } from 'wxt/browser';
 import TabbitSprite, { type SpriteState } from '../components/TabbitSprite';
+import { animationForMovement, animationForRoamingState, type MovementDirection } from '../domain/custom-pet';
 import {
   calculateMovementDuration,
   chooseFleeTarget,
   chooseMoodAction,
   chooseRoamingTarget,
   clampRoamingPoint,
+  planRoamingCycle,
   ROAMING_PET_SIZE,
+  ROAMING_ACTION_DURATION_MS,
   type RoamingAction,
   type RoamingPoint,
   type RoamingViewport
@@ -183,15 +186,21 @@ function pathOverlapsRenderedText(from: RoamingPoint, to: RoamingPoint): boolean
 function RoamingTabbit({ initial }: { initial: OverlayState }) {
   const [snapshot, setSnapshot] = useState(initial);
   const [position, setPosition] = useState(initialPosition);
+  const roamerRef = useRef<HTMLDivElement>(null);
   const positionRef = useRef(position);
   const [movementDuration, setMovementDuration] = useState(1_800);
   const [facingLeft, setFacingLeft] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const [movementDirection, setMovementDirection] = useState<MovementDirection>('right');
   const [action, setAction] = useState<RoamingAction>('wave');
   const [message, setMessage] = useState(() => t('roaming.arrived', { name: initial.pet.name }));
   const [announceMessage, setAnnounceMessage] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const messageTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const actionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const postMoveActionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const movementTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const movingRef = useRef(false);
 
   const enabled = snapshot.onboarded && (snapshot.settings.roamingEnabled ?? true);
   const reducedMotion = snapshot.settings.reducedMotion;
@@ -207,12 +216,34 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
   }, []);
 
   const showAction = useCallback((next: RoamingAction, duration = 1_400) => {
+    if (next !== 'idle' && next !== 'selected' && movingRef.current) return;
     if (actionTimer.current) clearTimeout(actionTimer.current);
     setAction(next);
     if (next !== 'selected') {
       actionTimer.current = setTimeout(() => setAction('idle'), duration);
     }
   }, []);
+
+  const finishMovement = useCallback(() => {
+    if (movementTimer.current) clearTimeout(movementTimer.current);
+    movementTimer.current = undefined;
+    movingRef.current = false;
+    setMoving(false);
+  }, []);
+
+  const beginMovement = useCallback((from: RoamingPoint, to: RoamingPoint, duration: number) => {
+    const movementAnimation = animationForMovement(from, to, 'right');
+    const direction: MovementDirection = movementAnimation === 'running-left' ? 'left' : 'right';
+    if (movementTimer.current) clearTimeout(movementTimer.current);
+    if (actionTimer.current) clearTimeout(actionTimer.current);
+    if (postMoveActionTimer.current) clearTimeout(postMoveActionTimer.current);
+    setAction('idle');
+    setFacingLeft(direction === 'left');
+    setMovementDirection(direction);
+    movingRef.current = true;
+    setMoving(true);
+    movementTimer.current = setTimeout(finishMovement, duration + 120);
+  }, [finishMovement]);
 
   useEffect(() => {
     positionRef.current = position;
@@ -240,6 +271,10 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
     let cancelled = false;
     const move = () => {
       if (cancelled) return;
+      if (movingRef.current) {
+        moveTimer = setTimeout(move, 120);
+        return;
+      }
       let nextDelay = 900;
       if (document.visibilityState === 'visible') {
         const current = positionRef.current;
@@ -251,12 +286,16 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
         );
         const duration = calculateMovementDuration(current, next);
         setMovementDuration(duration);
-        setFacingLeft(next.x < current.x);
+        beginMovement(current, next, duration);
         setPosition(next);
         const nextAction = chooseMoodAction(snapshot.pet.mood);
-        showAction(nextAction, nextAction === 'nap' ? 2_400 : 1_300);
+        const cycle = planRoamingCycle(duration, nextAction, Math.random() * 350);
+        if (postMoveActionTimer.current) clearTimeout(postMoveActionTimer.current);
+        postMoveActionTimer.current = setTimeout(() => {
+          if (!cancelled) showAction(nextAction, ROAMING_ACTION_DURATION_MS[nextAction]);
+        }, cycle.actionStartDelay);
         if (Math.random() < 0.35) showMessage(t(moodLineKey[snapshot.pet.mood]), 2_800);
-        nextDelay = duration + 100 + Math.random() * 350;
+        nextDelay = cycle.nextMovementDelay;
       }
       moveTimer = setTimeout(move, nextDelay);
     };
@@ -264,8 +303,9 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
     return () => {
       cancelled = true;
       if (moveTimer) clearTimeout(moveTimer);
+      if (postMoveActionTimer.current) clearTimeout(postMoveActionTimer.current);
     };
-  }, [enabled, menuOpen, reducedMotion, showAction, showMessage, snapshot.pet.mood]);
+  }, [beginMovement, enabled, menuOpen, reducedMotion, showAction, showMessage, snapshot.pet.mood]);
 
   useEffect(() => {
     const staleCount = snapshot.pet.staleTabCount ?? 0;
@@ -294,6 +334,8 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
   useEffect(() => () => {
     if (messageTimer.current) clearTimeout(messageTimer.current);
     if (actionTimer.current) clearTimeout(actionTimer.current);
+    if (postMoveActionTimer.current) clearTimeout(postMoveActionTimer.current);
+    if (movementTimer.current) clearTimeout(movementTimer.current);
   }, []);
 
   async function updatePreference(payload: {
@@ -326,11 +368,14 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
     const pointer = 'clientX' in event
       ? { x: event.clientX, y: event.clientY }
       : { x: positionRef.current.x + 56, y: positionRef.current.y + 56 };
+    const renderedBounds = roamerRef.current?.getBoundingClientRect();
+    const current = renderedBounds
+      ? { x: renderedBounds.left, y: renderedBounds.top }
+      : positionRef.current;
     const next = chooseFleeTarget(viewport(), pointer);
     setMovementDuration(650);
-    setFacingLeft(next.x < positionRef.current.x);
+    beginMovement(current, next, 650);
     setPosition(next);
-    showAction('flee', 900);
     showMessage(t('roaming.flee'), 2_000);
   }
 
@@ -350,6 +395,7 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
     'tabbitRoamer',
     `action-${action}`,
     facingLeft ? 'facingLeft' : '',
+    snapshot.customPet ? 'customPetActive' : '',
     reducedMotion ? 'reducedMotion' : '',
     menuLeft ? 'menuLeft' : '',
     menuTop ? 'menuTop' : ''
@@ -359,10 +405,23 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
     '--tabbit-move-duration': `${movementDuration}ms`,
     '--tabbit-opacity': String((snapshot.settings.roamingOpacity ?? 100) / 100)
   } as CSSProperties;
+  const customPetAnimation = animationForRoamingState({
+    moving,
+    direction: movementDirection,
+    action,
+    mood: snapshot.pet.mood
+  });
 
   return (
     <div className="tabbitRoamingLayer">
-      <div className={classNames} style={roamerStyle}>
+      <div
+        ref={roamerRef}
+        className={classNames}
+        style={roamerStyle}
+        onTransitionEnd={(event) => {
+          if (event.currentTarget === event.target && event.propertyName === 'transform') finishMovement();
+        }}
+      >
         {message && !menuOpen && (
           <div className="roamingSpeech" role={announceMessage ? 'status' : undefined}>
             {message}
@@ -386,6 +445,7 @@ function RoamingTabbit({ initial }: { initial: OverlayState }) {
               label={t('roaming.petAria', { name: snapshot.pet.name })}
               reducedMotion={reducedMotion}
               customPet={snapshot.customPet}
+              animation={customPetAnimation}
             />
           </div>
           {action === 'nap' && <span className="roamingZzz" aria-hidden="true">Zzz</span>}

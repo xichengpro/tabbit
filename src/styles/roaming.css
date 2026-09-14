@@ -57,13 +57,13 @@
   transform-origin: center bottom;
 }
 
-.facingLeft .rabbitVisual { transform: scaleX(-1); }
+.facingLeft:not(.customPetActive) .rabbitVisual { transform: scaleX(-1); }
 .action-selected .tabbitPetButton { opacity: 1; box-shadow: 0 0 0 4px #fff, 0 0 0 8px #72a777; }
-.action-hop .rabbitVisual { animation: roaming-hop .72s ease-in-out 2; }
-.action-wave .rabbitVisual { animation: roaming-wave 1.2s ease-in-out; }
-.action-nap .rabbitVisual { animation: roaming-nap 2.4s ease-in-out; }
-.action-alert .rabbitVisual { animation: roaming-alert .22s ease-in-out 6; }
-.action-flee .rabbitVisual { animation: roaming-flee .29s ease-in-out 2; }
+.action-hop:not(.customPetActive) .rabbitVisual { animation: roaming-hop .72s ease-in-out 2; }
+.action-wave:not(.customPetActive) .rabbitVisual { animation: roaming-wave 1.2s ease-in-out; }
+.action-nap:not(.customPetActive) .rabbitVisual { animation: roaming-nap 2.4s ease-in-out; }
+.action-alert:not(.customPetActive) .rabbitVisual { animation: roaming-alert .22s ease-in-out 6; }
+.action-flee:not(.customPetActive) .rabbitVisual { animation: roaming-flee .29s ease-in-out 2; }
 
 .action-nap .spriteEye { transform: scaleY(.2); transform-origin: center; }
 .action-alert .spriteEar { transform: rotate(-6deg); }

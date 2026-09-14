@@ -2,11 +2,28 @@ import ReactDOM from 'react-dom/client';
 import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_SETTINGS, type CustomPetAsset, type UserSettings } from '../../domain/models';
 import { validateTabLimits } from '../../domain/adoption';
-import { inspectCodexSpriteDimensions } from '../../domain/custom-pet';
+import {
+  inspectCodexSpriteCells,
+  inspectCodexSpriteDimensions,
+  type CodexAnimation,
+  type CodexSpriteMetadata
+} from '../../domain/custom-pet';
 import { clearCustomPetAsset, getCustomPetAsset, getSettings, resetOnboarding, setCustomPetAsset, setSettings } from '../../services/storage';
 import { t } from '../../i18n/zh-CN';
 import TabbitSprite from '../../components/TabbitSprite';
 import '../../styles/theme.css';
+
+const CUSTOM_PET_PREVIEWS: Array<{ animation: CodexAnimation; labelKey: Parameters<typeof t>[0] }> = [
+  { animation: 'idle', labelKey: 'options.customPetAnimation.idle' },
+  { animation: 'running-left', labelKey: 'options.customPetAnimation.runningLeft' },
+  { animation: 'running-right', labelKey: 'options.customPetAnimation.runningRight' },
+  { animation: 'waving', labelKey: 'options.customPetAnimation.waving' },
+  { animation: 'jumping', labelKey: 'options.customPetAnimation.jumping' },
+  { animation: 'failed', labelKey: 'options.customPetAnimation.failed' },
+  { animation: 'waiting', labelKey: 'options.customPetAnimation.waiting' },
+  { animation: 'running', labelKey: 'options.customPetAnimation.running' },
+  { animation: 'review', labelKey: 'options.customPetAnimation.review' }
+];
 
 function Options() {
   const [settings, update] = useState<UserSettings>(DEFAULT_SETTINGS);
@@ -15,6 +32,7 @@ function Options() {
   const [error, setError] = useState<string | null>(null);
   const [onboardingReset, setOnboardingReset] = useState(false);
   const [customPet, setCustomPet] = useState<CustomPetAsset | undefined>();
+  const [previewAnimation, setPreviewAnimation] = useState<CodexAnimation>('idle');
   const uploadRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     void Promise.all([getSettings(), getCustomPetAsset()])
@@ -34,11 +52,36 @@ function Options() {
     });
   }
 
-  async function dimensionsFor(file: File): Promise<{ width: number; height: number }> {
+  async function inspectImage(file: File): Promise<{ metadata: CodexSpriteMetadata; cellError?: string }> {
     const bitmap = await createImageBitmap(file);
-    const dimensions = { width: bitmap.width, height: bitmap.height };
-    bitmap.close();
-    return dimensions;
+    try {
+      const metadata = inspectCodexSpriteDimensions(bitmap.width, bitmap.height);
+      if (!metadata) throw new Error('INVALID_DIMENSIONS');
+      const canvas = document.createElement('canvas');
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      if (!context) throw new Error('CANVAS_UNAVAILABLE');
+      context.drawImage(bitmap, 0, 0);
+      const issues = inspectCodexSpriteCells(
+        context.getImageData(0, 0, bitmap.width, bitmap.height).data,
+        metadata
+      );
+      const firstIssue = issues[0];
+      return {
+        metadata,
+        ...(firstIssue ? {
+          cellError: t(
+            firstIssue.kind === 'required-empty'
+              ? 'options.customPetRequiredCellEmpty'
+              : 'options.customPetUnusedCellVisible',
+            { row: firstIssue.row + 1, column: firstIssue.column + 1 }
+          )
+        } : {})
+      };
+    } finally {
+      bitmap.close();
+    }
   }
 
   async function importCustomPet(file: File | undefined) {
@@ -50,8 +93,21 @@ function Options() {
         setError(t('options.customPetInvalid'));
         return;
       }
-      const dimensions = await dimensionsFor(file);
-      const metadata = inspectCodexSpriteDimensions(dimensions.width, dimensions.height);
+      let inspection: Awaited<ReturnType<typeof inspectImage>>;
+      try {
+        inspection = await inspectImage(file);
+      } catch (inspectionError) {
+        if (inspectionError instanceof Error && inspectionError.message === 'INVALID_DIMENSIONS') {
+          setError(t('options.customPetFormat'));
+          return;
+        }
+        throw inspectionError;
+      }
+      if (inspection.cellError) {
+        setError(inspection.cellError);
+        return;
+      }
+      const { metadata } = inspection;
       if (!metadata) {
         setError(t('options.customPetFormat'));
         return;
@@ -154,9 +210,24 @@ function Options() {
         <h2>{t('options.customPetTitle')}</h2>
         <p className="hint">{t('options.customPetHint')}</p>
         {customPet ? (
-          <div className="customPetPreview">
-            <div className="customPetPreviewSprite"><TabbitSprite state="calm" label={customPet.name} reducedMotion customPet={customPet} /></div>
-            <span>{t('options.customPetLoaded', { name: customPet.name, version: customPet.spriteVersion })}</span>
+          <div className="customPetPreviewPanel">
+            <div className="customPetPreview">
+              <div className="customPetPreviewSprite"><TabbitSprite state="calm" label={customPet.name} customPet={customPet} animation={previewAnimation} /></div>
+              <span>{t('options.customPetLoaded', { name: customPet.name, version: customPet.spriteVersion })}</span>
+            </div>
+            <div className="customPetPreviewActions" role="group" aria-label={t('options.customPetPreviewActions')}>
+              {CUSTOM_PET_PREVIEWS.map(({ animation, labelKey }) => (
+                <button
+                  key={animation}
+                  type="button"
+                  className="previewAction"
+                  aria-pressed={previewAnimation === animation}
+                  onClick={() => setPreviewAnimation(animation)}
+                >
+                  {t(labelKey)}
+                </button>
+              ))}
+            </div>
           </div>
         ) : <p className="hint">{t('options.customPetNone')}</p>}
         <input ref={uploadRef} className="srOnly" type="file" accept="image/png,image/webp" onChange={(event) => void importCustomPet(event.target.files?.[0])} />

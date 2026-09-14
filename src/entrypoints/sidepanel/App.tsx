@@ -6,6 +6,7 @@ import { browser } from 'wxt/browser';
 import type { AdoptionInput } from '../../domain/adoption';
 import AdoptionFlow from './AdoptionFlow';
 import TabbitSprite, { type SpriteState } from '../../components/TabbitSprite';
+import { animationForMood } from '../../domain/custom-pet';
 import { reasonMessageKey, selectMoodCopy, t, type FlavorHistory } from '../../i18n/zh-CN';
 
 const spriteState: Record<PetMood, SpriteState> = {
@@ -35,9 +36,20 @@ export default function App() {
     const listener = (message: { type?: string; payload?: PetState }) => {
       if (message.type === 'TABBIT_STATE_UPDATED' && message.payload) setState(message.payload);
     };
+    const storageListener: Parameters<typeof browser.storage.onChanged.addListener>[0] = (changes, areaName) => {
+      if (areaName !== 'local' || (!changes.settingsV1 && !changes.customPetAssetV1)) return;
+      void Promise.all([getSettings(), getCustomPetAsset()]).then(([settings, asset]) => {
+        setReducedMotion(settings.reducedMotion);
+        setCustomPet(settings.customPetEnabled ? asset : undefined);
+      });
+    };
     browser.runtime.onMessage.addListener(listener);
+    browser.storage.onChanged.addListener(storageListener);
     void browser.runtime.sendMessage({ type: 'TABBIT_REFRESH' });
-    return () => browser.runtime.onMessage.removeListener(listener);
+    return () => {
+      browser.runtime.onMessage.removeListener(listener);
+      browser.storage.onChanged.removeListener(storageListener);
+    };
   }, []);
 
   const primaryCause: LoadReasonCode | undefined = state.loadReasons[0]?.code;
@@ -86,7 +98,7 @@ export default function App() {
 
       <section className={`habitat mood-${state.mood}`} aria-live="polite">
         <div className="pet">
-          <TabbitSprite state={spriteState[state.mood]} label={t('app.spriteLabel', { title })} reducedMotion={reducedMotion} customPet={customPet} />
+          <TabbitSprite state={spriteState[state.mood]} label={t('app.spriteLabel', { title })} reducedMotion={reducedMotion} customPet={customPet} animation={animationForMood(state.mood)} />
         </div>
         <div className="speech">
           <strong>{title}</strong>

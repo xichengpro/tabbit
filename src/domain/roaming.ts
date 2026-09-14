@@ -15,6 +15,17 @@ export type RoamingObstacleCheck = (point: RoamingPoint) => boolean;
 
 export const ROAMING_PET_SIZE = 112;
 export const ROAMING_PADDING = 12;
+export const ROAMING_POST_MOVEMENT_ACTION_DELAY_MS = 160;
+export const ROAMING_IDLE_BEFORE_NEXT_MOVE_MS = 420;
+export const ROAMING_ACTION_DURATION_MS: Record<RoamingAction, number> = {
+  idle: 0,
+  hop: 1_300,
+  wave: 1_300,
+  nap: 2_400,
+  alert: 1_300,
+  flee: 0,
+  selected: 0
+};
 const MIN_ROAMING_STEP = 110;
 const MAX_ROAMING_STEP = 360;
 const TARGET_ATTEMPTS = 10;
@@ -63,6 +74,18 @@ export function chooseRoamingTarget(
 export function calculateMovementDuration(from: RoamingPoint, to: RoamingPoint): number {
   const distance = Math.hypot(to.x - from.x, to.y - from.y);
   return Math.round(Math.min(2_800, Math.max(900, distance / 0.16)));
+}
+
+export function planRoamingCycle(
+  movementDuration: number,
+  action: RoamingAction,
+  extraIdleDelay = 0
+): { actionStartDelay: number; nextMovementDelay: number } {
+  const actionStartDelay = movementDuration + ROAMING_POST_MOVEMENT_ACTION_DELAY_MS;
+  return {
+    actionStartDelay,
+    nextMovementDelay: actionStartDelay + ROAMING_ACTION_DURATION_MS[action] + ROAMING_IDLE_BEFORE_NEXT_MOVE_MS + extraIdleDelay
+  };
 }
 
 export function chooseFleeTarget(

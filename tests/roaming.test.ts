@@ -5,6 +5,10 @@ import {
   chooseMoodAction,
   chooseRoamingTarget,
   clampRoamingPoint,
+  planRoamingCycle,
+  ROAMING_ACTION_DURATION_MS,
+  ROAMING_IDLE_BEFORE_NEXT_MOVE_MS,
+  ROAMING_POST_MOVEMENT_ACTION_DELAY_MS,
   ROAMING_PADDING,
   ROAMING_PET_SIZE
 } from '../src/domain/roaming';
@@ -46,6 +50,15 @@ describe('roaming pet movement', () => {
     expect(calculateMovementDuration({ x: 0, y: 0 }, { x: 10, y: 0 })).toBe(900);
     expect(calculateMovementDuration({ x: 0, y: 0 }, { x: 320, y: 0 })).toBe(2_000);
     expect(calculateMovementDuration({ x: 0, y: 0 }, { x: 1_000, y: 0 })).toBe(2_800);
+  });
+
+  it('keeps a mood action fully after the walking segment before another move', () => {
+    const plan = planRoamingCycle(1_400, 'hop', 200);
+    expect(plan.actionStartDelay).toBe(1_400 + ROAMING_POST_MOVEMENT_ACTION_DELAY_MS);
+    expect(plan.nextMovementDelay).toBe(
+      plan.actionStartDelay + ROAMING_ACTION_DURATION_MS.hop + ROAMING_IDLE_BEFORE_NEXT_MOVE_MS + 200
+    );
+    expect(plan.nextMovementDelay).toBeGreaterThan(plan.actionStartDelay + ROAMING_ACTION_DURATION_MS.hop);
   });
 
   it('flees toward the corner farthest from the pointer', () => {

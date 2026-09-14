@@ -23,6 +23,10 @@ h1 { margin: 4px 0 16px; font-size: 26px; }
 .customPetSprite { width: 100%; height: 100%; background-repeat: no-repeat; image-rendering: auto; }
 .customPetPreview { display: flex; align-items: center; gap: 12px; color: #42604a; font-size: 13px; }
 .customPetPreviewSprite { width: 76px; height: 76px; flex: 0 0 auto; }
+.customPetPreviewPanel { display: grid; gap: 10px; }
+.customPetPreviewActions { display: flex; flex-wrap: wrap; gap: 6px; }
+.previewAction { padding: 6px 9px; border: 1px solid #cad5ca; border-radius: 999px; color: #42604a; background: #fffefa; cursor: pointer; font-size: 12px; }
+.previewAction[aria-pressed='true'] { border-color: #3f7c4a; color: #fff; background: #3f7c4a; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .spriteShadow { fill: rgba(57, 68, 59, .14); }
 .spriteBodyFill { fill: var(--sprite-body, #f7f4ea); stroke: #6f806f; stroke-width: 3; }
